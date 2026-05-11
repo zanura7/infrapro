@@ -1,0 +1,2606 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projek Infra · Mockup UI v0.1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+          },
+          colors: {
+            ink: {
+              50:  '#FAFAF7',
+              100: '#F5F4ED',
+              200: '#E8E7DE',
+              900: '#0B1220',
+              950: '#070C16',
+            },
+            brand: {
+              50:  '#ECFEFF',
+              100: '#CFFAFE',
+              400: '#22D3EE',
+              500: '#06B6D4',
+              600: '#0891B2',
+              700: '#0E7490',
+            },
+            flame: {
+              400: '#FB923C',
+              500: '#F97316',
+              600: '#EA580C',
+            },
+          },
+          boxShadow: {
+            soft: '0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.08)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-display { font-family: 'Playfair Display', Georgia, serif; }
+    body { background: #FAFAF7; }
+    .scroll-x::-webkit-scrollbar { height: 6px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: #E8E7DE; border-radius: 3px; }
+    .grid-bg {
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 56px 56px;
+    }
+    .pulse-dot::before {
+      content: ''; position: absolute; inset: -3px; border-radius: 9999px;
+      background: currentColor; opacity: .25; animation: pulse 1.6s ease-out infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(.8); opacity: .35; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+    .nav-item.active { background: #0B1220; color: #fff; }
+    .nav-item.active .nav-icon { color: #22D3EE; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body class="text-ink-900 antialiased">
+
+<!-- ============== LAYOUT ============== -->
+<div class="min-h-screen flex">
+
+  <!-- ============== SIDEBAR ============== -->
+  <aside class="w-64 shrink-0 bg-ink-950 text-ink-50 flex flex-col">
+    <div class="px-5 py-5 border-b border-white/5 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-brand-500/15 grid place-items-center ring-1 ring-brand-400/30">
+        <div class="w-3 h-3 rounded-full bg-brand-400 relative pulse-dot text-brand-400"></div>
+      </div>
+      <div>
+        <div class="text-[13px] tracking-[0.18em] text-brand-400 font-semibold">PROJEK</div>
+        <div class="text-base font-display font-semibold leading-none">Infra</div>
+      </div>
+    </div>
+
+    <nav class="p-3 space-y-1 text-sm flex-1">
+      <button data-view="dashboard"  class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="layout-dashboard" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Dashboard</span>
+      </button>
+      <button data-view="products"   class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="package" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Product Hub</span>
+        <span class="ml-auto text-[10px] font-mono text-white/40">12</span>
+      </button>
+      <button data-view="studio"     class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="sparkles" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>AI Content Studio</span>
+      </button>
+      <button data-view="posting"    class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="send" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Auto Posting</span>
+      </button>
+      <button data-view="ads"        class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="megaphone" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Ads Integration</span>
+      </button>
+
+      <div class="px-3 pt-6 pb-2 text-[11px] uppercase tracking-[0.18em] text-white/30">Workspace</div>
+
+      <button data-view="settings" data-settings-tab="team" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="users" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Team</span>
+      </button>
+      <button data-view="settings" data-settings-tab="integrations" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="plug" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Integrations</span>
+      </button>
+      <button data-view="settings" data-settings-tab="profile" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition">
+        <i data-lucide="settings-2" class="nav-icon w-4 h-4 text-white/60"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <div class="p-3 border-t border-white/5">
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-flame-500 grid place-items-center text-[11px] font-semibold text-ink-900">BD</div>
+        <div class="leading-tight">
+          <div class="text-sm font-medium">Bedaie IT</div>
+          <div class="text-[11px] text-white/40">admin@bedaie.id</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============== MAIN ============== -->
+  <main class="flex-1 min-w-0">
+
+    <!-- Topbar -->
+    <header class="h-14 px-8 border-b border-ink-200 bg-ink-50/80 backdrop-blur sticky top-0 z-20 flex items-center gap-4">
+      <div class="flex items-center gap-2 text-sm text-ink-900/60">
+        <span class="font-mono text-[11px] tracking-widest px-1.5 py-0.5 rounded bg-ink-200/60">v0.1</span>
+        <span>·</span>
+        <span id="crumb">Dashboard</span>
+      </div>
+      <div class="flex-1"></div>
+      <div class="relative w-64">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-900/40"></i>
+        <input placeholder="Search products, content, campaigns…" class="w-full pl-9 pr-3 py-1.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+      </div>
+      <button class="relative w-8 h-8 grid place-items-center rounded-md hover:bg-ink-200/60 transition">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-flame-500"></span>
+      </button>
+      <button data-go="product-new" class="px-3 py-1.5 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 transition flex items-center gap-2">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Product
+      </button>
+    </header>
+
+    <!-- ============== VIEW: DASHBOARD ============== -->
+    <section id="view-dashboard" class="view">
+      <!-- Hero -->
+      <div class="bg-ink-950 text-white relative overflow-hidden">
+        <div class="absolute inset-0 grid-bg opacity-50"></div>
+        <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl"></div>
+        <div class="relative px-8 pt-10 pb-12">
+          <div class="text-[12px] tracking-[0.22em] text-brand-400 font-semibold mb-3">01 · OVERVIEW</div>
+          <h1 class="font-display text-4xl md:text-5xl font-semibold leading-[1.05] max-w-3xl">
+            One product — <span class="text-brand-400">every channel.</span>
+          </h1>
+          <p class="text-white/60 mt-3 max-w-xl text-sm">
+            Performance snapshot, recent activity, and what needs attention today.
+          </p>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 max-w-4xl">
+            <!-- KPI -->
+            <div class="bg-white/[0.04] backdrop-blur ring-1 ring-white/10 rounded-xl p-4">
+              <div class="text-[10px] tracking-widest text-brand-400">VELOCITY</div>
+              <div class="font-display text-3xl mt-1">10<span class="text-brand-400">×</span></div>
+              <div class="text-[11px] text-white/50 mt-1">vs manual workflow</div>
+            </div>
+            <div class="bg-white/[0.04] backdrop-blur ring-1 ring-white/10 rounded-xl p-4">
+              <div class="text-[10px] tracking-widest text-brand-400">COST SAVED</div>
+              <div class="font-display text-3xl mt-1">60<span class="text-brand-400">%</span></div>
+              <div class="text-[11px] text-white/50 mt-1">per piece</div>
+            </div>
+            <div class="bg-white/[0.04] backdrop-blur ring-1 ring-white/10 rounded-xl p-4">
+              <div class="text-[10px] tracking-widest text-brand-400">IDEA → POST</div>
+              <div class="font-display text-3xl mt-1">1<span class="text-brand-400">hr</span></div>
+              <div class="text-[11px] text-white/50 mt-1">briefing → published</div>
+            </div>
+            <div class="bg-white/[0.04] backdrop-blur ring-1 ring-white/10 rounded-xl p-4">
+              <div class="text-[10px] tracking-widest text-flame-400">ROAS</div>
+              <div class="font-display text-3xl mt-1">2<span class="text-flame-400">×</span></div>
+              <div class="text-[11px] text-white/50 mt-1">connected vs siloed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content row -->
+      <div class="px-8 py-8 grid grid-cols-12 gap-6">
+        <!-- Activity -->
+        <div class="col-span-12 lg:col-span-8 bg-white rounded-xl border border-ink-200 shadow-soft p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="font-display text-xl font-semibold">Recent activity</h3>
+              <p class="text-xs text-ink-900/50 mt-0.5">Last 7 days · all products</p>
+            </div>
+            <div class="flex gap-1 text-xs">
+              <button class="px-2.5 py-1 rounded-md bg-ink-100 font-medium">All</button>
+              <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Content</button>
+              <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Posts</button>
+              <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Ads</button>
+            </div>
+          </div>
+
+          <ul class="space-y-1">
+            <li class="flex items-center gap-4 py-3 border-b border-ink-100">
+              <div class="w-9 h-9 rounded-lg bg-brand-50 grid place-items-center text-brand-600 shrink-0"><i data-lucide="image" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm"><span class="font-medium">Sihaté Olive Soap</span> · 3 poster variants generated</div>
+                <div class="text-[11px] text-ink-900/50">by AI Studio · 12 min ago</div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Ready to review</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-ink-100">
+              <div class="w-9 h-9 rounded-lg bg-flame-50 grid place-items-center text-flame-600 shrink-0"><i data-lucide="megaphone" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm">Campaign <span class="font-medium">"Raya Olive Promo"</span> · ROAS dropped 18%</div>
+                <div class="text-[11px] text-ink-900/50">Meta Ads · alert triggered · 1 hour ago</div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-flame-50 text-flame-600 ring-1 ring-flame-200">Action needed</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-ink-100">
+              <div class="w-9 h-9 rounded-lg bg-ink-100 grid place-items-center text-ink-900 shrink-0"><i data-lucide="send" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm"><span class="font-medium">Tutorial reel #14</span> · auto-posted to TikTok + Shorts</div>
+                <div class="text-[11px] text-ink-900/50">Auto Posting · 09:00 · 4 hours ago</div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 text-ink-900">Published</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-ink-100">
+              <div class="w-9 h-9 rounded-lg bg-brand-50 grid place-items-center text-brand-600 shrink-0"><i data-lucide="video" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm"><span class="font-medium">Madu Bedaie</span> · video rendering (84%)</div>
+                <div class="text-[11px] text-ink-900/50">AI Studio · queue worker · ETA 2 min</div>
+              </div>
+              <div class="w-32 h-1.5 bg-ink-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500" style="width:84%"></div></div>
+            </li>
+            <li class="flex items-center gap-4 py-3">
+              <div class="w-9 h-9 rounded-lg bg-ink-100 grid place-items-center text-ink-900 shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm">Salespage <span class="font-medium">"Raya Olive Promo"</span> published</div>
+                <div class="text-[11px] text-ink-900/50">8 hours ago · 247 views · CTR 4.2%</div>
+              </div>
+              <a class="text-[11px] text-brand-600 hover:underline" href="#">View →</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Side: Quick Actions + This Week -->
+        <div class="col-span-12 lg:col-span-4 space-y-6">
+          <div class="bg-white rounded-xl border border-ink-200 shadow-soft p-6">
+            <h3 class="font-display text-xl font-semibold mb-4">Quick actions</h3>
+            <div class="space-y-2">
+              <button class="w-full flex items-center gap-3 p-3 rounded-lg border border-ink-200 hover:border-brand-500 hover:bg-brand-50/50 transition text-left group">
+                <div class="w-9 h-9 rounded-md bg-brand-50 grid place-items-center text-brand-600 group-hover:bg-brand-500 group-hover:text-white transition"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+                <div class="flex-1"><div class="text-sm font-medium">Generate new content</div><div class="text-[11px] text-ink-900/50">Video / Poster / Salespage</div></div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-ink-900/30"></i>
+              </button>
+              <button class="w-full flex items-center gap-3 p-3 rounded-lg border border-ink-200 hover:border-brand-500 hover:bg-brand-50/50 transition text-left group">
+                <div class="w-9 h-9 rounded-md bg-brand-50 grid place-items-center text-brand-600 group-hover:bg-brand-500 group-hover:text-white transition"><i data-lucide="calendar-plus" class="w-4 h-4"></i></div>
+                <div class="flex-1"><div class="text-sm font-medium">Schedule a post</div><div class="text-[11px] text-ink-900/50">Multi-platform in one click</div></div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-ink-900/30"></i>
+              </button>
+              <button class="w-full flex items-center gap-3 p-3 rounded-lg border border-ink-200 hover:border-brand-500 hover:bg-brand-50/50 transition text-left group">
+                <div class="w-9 h-9 rounded-md bg-flame-50 grid place-items-center text-flame-600 group-hover:bg-flame-500 group-hover:text-white transition"><i data-lucide="trending-up" class="w-4 h-4"></i></div>
+                <div class="flex-1"><div class="text-sm font-medium">Boost an organic winner</div><div class="text-[11px] text-ink-900/50">Top creative → paid ads</div></div>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-ink-900/30"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-ink-900 text-white rounded-xl p-6 relative overflow-hidden">
+            <div class="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-brand-500/20 blur-2xl"></div>
+            <div class="relative">
+              <div class="text-[10px] tracking-widest text-brand-400 mb-3">THIS WEEK</div>
+              <div class="font-display text-3xl">23 <span class="text-white/50 text-lg font-normal">scheduled</span></div>
+              <div class="mt-4 space-y-2 text-[12px]">
+                <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span><span class="text-white/70 w-14">TikTok</span><span class="text-white/90">9 posts</span></div>
+                <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span><span class="text-white/70 w-14">IG + FB</span><span class="text-white/90">8 posts</span></div>
+                <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span><span class="text-white/70 w-14">Shorts</span><span class="text-white/90">4 posts</span></div>
+                <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-flame-400"></span><span class="text-white/70 w-14">Salespage</span><span class="text-white/90">2 drops</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: PRODUCT HUB ============== -->
+    <section id="view-products" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 01 · FOUNDATION</div>
+            <h1 class="font-display text-4xl font-semibold">Product Hub</h1>
+            <p class="text-ink-900/60 mt-1 text-sm">Single source of truth for every product in the ecosystem.</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100 transition flex items-center gap-2">
+              <i data-lucide="filter" class="w-3.5 h-3.5"></i> Filter
+            </button>
+            <button data-go="product-new" class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 transition flex items-center gap-2">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Product
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat strip -->
+        <div class="grid grid-cols-4 gap-3 mb-8">
+          <div class="bg-white border border-ink-200 rounded-lg p-4">
+            <div class="text-[10px] tracking-widest text-ink-900/50">TOTAL PRODUCTS</div>
+            <div class="font-display text-2xl mt-1">12</div>
+          </div>
+          <div class="bg-white border border-ink-200 rounded-lg p-4">
+            <div class="text-[10px] tracking-widest text-ink-900/50">ASSET LIBRARY</div>
+            <div class="font-display text-2xl mt-1">348 <span class="text-sm text-ink-900/40 font-sans">files</span></div>
+          </div>
+          <div class="bg-white border border-ink-200 rounded-lg p-4">
+            <div class="text-[10px] tracking-widest text-ink-900/50">UPDATED TODAY</div>
+            <div class="font-display text-2xl mt-1">3</div>
+          </div>
+          <div class="bg-white border border-ink-200 rounded-lg p-4">
+            <div class="text-[10px] tracking-widest text-ink-900/50">BRAND VOICES</div>
+            <div class="font-display text-2xl mt-1">9</div>
+          </div>
+        </div>
+
+        <!-- Product grid -->
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Featured product (Sihaté from PRD) -->
+          <div class="col-span-12 lg:col-span-7 bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+            <div class="bg-ink-950 text-white px-6 py-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-brand-500/15 ring-1 ring-brand-400/30 grid place-items-center">
+                  <i data-lucide="box" class="w-5 h-5 text-brand-400"></i>
+                </div>
+                <div>
+                  <div class="text-[11px] tracking-widest text-brand-400">PRODUCT</div>
+                  <div class="font-display text-lg">Sihaté Olive Soap</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-1 rounded bg-white/10 ring-1 ring-white/10">v 3.2</span>
+            </div>
+
+            <div class="px-6 py-5 grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+              <div>
+                <div class="text-[10px] tracking-widest text-brand-600 mb-1">CATEGORY</div>
+                <div>Personal Care · Skincare</div>
+              </div>
+              <div>
+                <div class="text-[10px] tracking-widest text-brand-600 mb-1">PRICE</div>
+                <div class="font-medium">RM 25.00</div>
+              </div>
+              <div class="col-span-2">
+                <div class="text-[10px] tracking-widest text-brand-600 mb-1">USP</div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">100% natural</span>
+                  <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">halal</span>
+                  <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">sensitive-skin friendly</span>
+                </div>
+              </div>
+              <div class="col-span-2">
+                <div class="text-[10px] tracking-widest text-brand-600 mb-1">TARGET AUDIENCE</div>
+                <div>Women 25–45 · sensitive skin</div>
+              </div>
+              <div class="col-span-2">
+                <div class="text-[10px] tracking-widest text-brand-600 mb-1">BRAND VOICE</div>
+                <div class="italic text-ink-900/70 font-serif text-base">"Warm, caring, trustworthy."</div>
+              </div>
+            </div>
+
+            <div class="border-t border-ink-200 px-6 py-3 flex items-center justify-between bg-ink-50/50">
+              <div class="flex gap-4 text-[11px] text-ink-900/60">
+                <span class="flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5"></i> 42 assets</span>
+                <span class="flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 28 contents</span>
+                <span class="flex items-center gap-1"><i data-lucide="history" class="w-3.5 h-3.5"></i> updated 2h ago</span>
+              </div>
+              <button data-go="product-detail" class="text-xs font-medium text-brand-600 hover:text-brand-700">Open detail →</button>
+            </div>
+          </div>
+
+          <!-- Side: tabs preview -->
+          <div class="col-span-12 lg:col-span-5 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+            <div class="flex gap-1 border-b border-ink-200 -mx-6 px-6 pb-0 mb-5 text-sm">
+              <button class="px-3 py-2 border-b-2 border-brand-500 font-medium">Asset Library</button>
+              <button class="px-3 py-2 border-b-2 border-transparent text-ink-900/50 hover:text-ink-900">Versions</button>
+              <button class="px-3 py-2 border-b-2 border-transparent text-ink-900/50 hover:text-ink-900">Linked Content</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div class="aspect-square rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-300 grid place-items-center text-emerald-700"><i data-lucide="image" class="w-5 h-5"></i></div>
+              <div class="aspect-square rounded-lg bg-gradient-to-br from-amber-100 to-amber-300 grid place-items-center text-amber-700"><i data-lucide="video" class="w-5 h-5"></i></div>
+              <div class="aspect-square rounded-lg bg-gradient-to-br from-rose-100 to-rose-300 grid place-items-center text-rose-700"><i data-lucide="image" class="w-5 h-5"></i></div>
+              <div class="aspect-square rounded-lg bg-gradient-to-br from-sky-100 to-sky-300 grid place-items-center text-sky-700"><i data-lucide="file-image" class="w-5 h-5"></i></div>
+              <div class="aspect-square rounded-lg bg-gradient-to-br from-violet-100 to-violet-300 grid place-items-center text-violet-700"><i data-lucide="image" class="w-5 h-5"></i></div>
+              <div class="aspect-square rounded-lg bg-ink-100 border-2 border-dashed border-ink-200 grid place-items-center text-ink-900/40 hover:border-brand-500 hover:text-brand-500 transition cursor-pointer">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+              </div>
+            </div>
+
+            <div class="mt-5 text-[11px] text-ink-900/50">
+              42 files · 1.2 GB · last upload by <span class="font-medium text-ink-900">@diah</span> · 6 hours ago
+            </div>
+          </div>
+
+          <!-- Other products as cards -->
+          <div class="col-span-12">
+            <div class="text-[11px] tracking-widest text-ink-900/50 mb-3">OTHER PRODUCTS</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-white rounded-xl border border-ink-200 p-4 hover:shadow-soft transition cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 grid place-items-center text-emerald-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                <div class="font-medium text-sm">Madu Bedaie</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">Food · Health</div>
+                <div class="text-[11px] text-ink-900/40 mt-2">8 contents · v 1.4</div>
+              </div>
+              <div class="bg-white rounded-xl border border-ink-200 p-4 hover:shadow-soft transition cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-amber-50 grid place-items-center text-amber-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                <div class="font-medium text-sm">Tudung Klasik</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">Fashion · Modest</div>
+                <div class="text-[11px] text-ink-900/40 mt-2">15 contents · v 2.1</div>
+              </div>
+              <div class="bg-white rounded-xl border border-ink-200 p-4 hover:shadow-soft transition cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-sky-50 grid place-items-center text-sky-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                <div class="font-medium text-sm">Bedaie Vitamin C</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">Health · Supplement</div>
+                <div class="text-[11px] text-ink-900/40 mt-2">12 contents · v 1.8</div>
+              </div>
+              <div class="bg-white border-2 border-dashed border-ink-200 rounded-xl p-4 grid place-items-center text-ink-900/40 hover:border-brand-500 hover:text-brand-500 transition cursor-pointer">
+                <div class="text-center">
+                  <i data-lucide="plus" class="w-5 h-5 mx-auto mb-2"></i>
+                  <div class="text-xs">Add product</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: PRODUCT DETAIL ============== -->
+    <section id="view-product-detail" class="view" hidden>
+      <!-- Header strip -->
+      <div class="bg-ink-950 text-white px-8 py-6 relative overflow-hidden">
+        <div class="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-brand-500/15 blur-3xl"></div>
+        <div class="relative flex items-end justify-between">
+          <div>
+            <button data-go="products" class="text-[11px] text-white/40 hover:text-white inline-flex items-center gap-1 mb-3">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Product Hub
+            </button>
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-xl bg-brand-500/15 ring-1 ring-brand-400/30 grid place-items-center">
+                <i data-lucide="box" class="w-7 h-7 text-brand-400"></i>
+              </div>
+              <div>
+                <div class="text-[11px] tracking-widest text-brand-400">PRODUCT</div>
+                <h1 class="font-display text-3xl font-semibold">Sihaté Olive Soap</h1>
+                <div class="text-xs text-white/50 mt-1">Personal Care · Skincare · RM 25.00 · 42 assets · 28 contents</div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 ring-1 ring-white/10 transition flex items-center gap-2">
+              <i data-lucide="history" class="w-3.5 h-3.5"></i> v 3.2
+            </button>
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 ring-1 ring-white/10 transition flex items-center gap-2">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
+            </button>
+            <button data-go="studio-start" class="px-3 py-2 text-xs font-medium rounded-md bg-brand-500 hover:bg-brand-600 text-white transition flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Generate content
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="relative flex gap-1 mt-8 -mb-6 text-sm">
+          <button data-pd-tab="master"   class="pd-tab pd-active px-4 py-2.5 rounded-t-lg bg-ink-50 text-ink-900 font-medium">Master Info</button>
+          <button data-pd-tab="assets"   class="pd-tab px-4 py-2.5 rounded-t-lg text-white/60 hover:text-white">Asset Library <span class="text-[10px] font-mono text-white/40">42</span></button>
+          <button data-pd-tab="voice"    class="pd-tab px-4 py-2.5 rounded-t-lg text-white/60 hover:text-white">Brand Voice</button>
+          <button data-pd-tab="versions" class="pd-tab px-4 py-2.5 rounded-t-lg text-white/60 hover:text-white">Versions <span class="text-[10px] font-mono text-white/40">12</span></button>
+          <button data-pd-tab="content"  class="pd-tab px-4 py-2.5 rounded-t-lg text-white/60 hover:text-white">Linked Content <span class="text-[10px] font-mono text-white/40">28</span></button>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Master Info ===== -->
+      <div id="pd-pane-master" class="pd-pane px-8 py-8 grid grid-cols-12 gap-6">
+        <div class="col-span-8 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+          <h3 class="font-display text-xl font-semibold mb-5">Product master</h3>
+          <dl class="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">NAME</dt>
+              <dd>Sihaté Olive Soap</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">SKU</dt>
+              <dd class="font-mono">SHTOS-001</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">CATEGORY</dt>
+              <dd>Personal Care · Skincare</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">PRICE</dt>
+              <dd class="font-medium">RM 25.00</dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">DESCRIPTION</dt>
+              <dd class="text-ink-900/80 leading-relaxed">Cold-pressed olive oil soap formulated for sensitive skin. Free from harsh sulfates, parabens, and synthetic fragrances. Halal-certified by JAKIM.</dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">USP</dt>
+              <dd class="flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">100% natural</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">halal-certified</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">sensitive-skin friendly</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">cruelty-free</span>
+              </dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">TARGET AUDIENCE</dt>
+              <dd>Women 25–45 · urban · sensitive skin · halal-conscious</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">PRIMARY SALES CHANNEL</dt>
+              <dd>Shopee · WhatsApp</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] tracking-widest text-brand-600 mb-1">AVERAGE MARGIN</dt>
+              <dd>62%</dd>
+            </div>
+          </dl>
+        </div>
+
+        <aside class="col-span-4 space-y-4">
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50 mb-3">PERFORMANCE · LAST 30 DAYS</div>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-baseline justify-between">
+                <span class="text-ink-900/60">Content generated</span>
+                <span class="font-display text-xl">28</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-ink-900/60">Posts published</span>
+                <span class="font-display text-xl">22</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-ink-900/60">Best ROAS</span>
+                <span class="font-display text-xl text-emerald-700">5.2×</span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-ink-900/60">AI spend</span>
+                <span class="font-display text-xl">RM 18</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50 mb-3">DANGER ZONE</div>
+            <button class="w-full px-3 py-2 text-xs font-medium rounded-md border border-flame-300 text-flame-700 hover:bg-flame-50 transition flex items-center justify-center gap-2">
+              <i data-lucide="archive" class="w-3.5 h-3.5"></i> Archive product
+            </button>
+            <button class="w-full mt-2 px-3 py-2 text-xs font-medium rounded-md border border-rose-300 text-rose-700 hover:bg-rose-50 transition flex items-center justify-center gap-2">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete permanently
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ===== Tab: Assets ===== -->
+      <div id="pd-pane-assets" class="pd-pane px-8 py-8" hidden>
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-display text-xl font-semibold">Asset library</h3>
+            <p class="text-xs text-ink-900/50">42 files · 1.2 GB · stored in <span class="font-mono">storage/app/products/sihate</span></p>
+          </div>
+          <div class="flex gap-2">
+            <select class="px-3 py-2 text-xs rounded-md bg-white border border-ink-200">
+              <option>All types</option>
+              <option>Images</option>
+              <option>Videos</option>
+              <option>Logos</option>
+              <option>Brand kit</option>
+            </select>
+            <button data-go="asset-upload" class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-emerald-200 to-emerald-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-emerald-800"><i data-lucide="image" class="w-7 h-7"></i></div>
+            <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white opacity-0 group-hover:opacity-100 transition">
+              hero-front.jpg · 2.4 MB
+            </div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-amber-200 to-amber-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-amber-800"><i data-lucide="video" class="w-7 h-7"></i></div>
+            <span class="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded bg-black/50 text-white font-mono">0:42</span>
+            <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white opacity-0 group-hover:opacity-100 transition">
+              unboxing-raw.mp4 · 18 MB
+            </div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-rose-200 to-rose-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-rose-800"><i data-lucide="image" class="w-7 h-7"></i></div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-sky-200 to-sky-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-sky-800"><i data-lucide="image" class="w-7 h-7"></i></div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-violet-200 to-violet-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-violet-800"><i data-lucide="badge-check" class="w-7 h-7"></i></div>
+            <span class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded bg-violet-700 text-white font-mono">LOGO</span>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-fuchsia-200 to-fuchsia-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-fuchsia-800"><i data-lucide="image" class="w-7 h-7"></i></div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-orange-200 to-orange-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-orange-800"><i data-lucide="image" class="w-7 h-7"></i></div>
+          </div>
+          <div class="group relative aspect-square rounded-lg bg-gradient-to-br from-teal-200 to-teal-400 cursor-pointer overflow-hidden">
+            <div class="absolute inset-0 grid place-items-center text-teal-800"><i data-lucide="video" class="w-7 h-7"></i></div>
+            <span class="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded bg-black/50 text-white font-mono">1:18</span>
+          </div>
+          <button data-go="asset-upload" class="aspect-square rounded-lg bg-ink-50 border-2 border-dashed border-ink-200 grid place-items-center text-ink-900/40 hover:border-brand-500 hover:text-brand-500 transition">
+            <div class="text-center">
+              <i data-lucide="plus" class="w-6 h-6 mx-auto"></i>
+              <div class="text-[10px] mt-1">Upload</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Brand Voice ===== -->
+      <div id="pd-pane-voice" class="pd-pane px-8 py-8 grid grid-cols-12 gap-6" hidden>
+        <div class="col-span-7 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+          <h3 class="font-display text-xl font-semibold mb-4">Brand voice</h3>
+
+          <div class="space-y-5">
+            <div>
+              <div class="text-[10px] tracking-widest text-brand-600 mb-2">TONE</div>
+              <div class="flex flex-wrap gap-1.5">
+                <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 text-xs">Warm</span>
+                <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 text-xs">Caring</span>
+                <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 text-xs">Trustworthy</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] tracking-widest text-brand-600 mb-2">FORMALITY</div>
+              <div class="relative h-2 rounded-full bg-ink-100">
+                <div class="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-brand-500 ring-2 ring-white" style="left: 35%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-ink-900/50 mt-1.5">
+                <span>Formal</span><span>35% · slightly casual</span><span>Casual</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] tracking-widest text-brand-600 mb-2">DO'S</div>
+              <ul class="text-sm space-y-1.5">
+                <li class="flex gap-2 items-start"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-0.5"></i> Lead with empathy for sensitive-skin pain</li>
+                <li class="flex gap-2 items-start"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-0.5"></i> Always mention halal certification</li>
+                <li class="flex gap-2 items-start"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-0.5"></i> Use real customer testimonials with names</li>
+              </ul>
+            </div>
+            <div>
+              <div class="text-[10px] tracking-widest text-flame-600 mb-2">DON'TS</div>
+              <ul class="text-sm space-y-1.5">
+                <li class="flex gap-2 items-start"><i data-lucide="x" class="w-4 h-4 text-flame-600 mt-0.5"></i> Never claim medical benefits (cure / treat)</li>
+                <li class="flex gap-2 items-start"><i data-lucide="x" class="w-4 h-4 text-flame-600 mt-0.5"></i> Don't name competitor brands directly</li>
+                <li class="flex gap-2 items-start"><i data-lucide="x" class="w-4 h-4 text-flame-600 mt-0.5"></i> Avoid superlatives without proof ("best," "#1")</li>
+              </ul>
+            </div>
+            <div>
+              <div class="text-[10px] tracking-widest text-brand-600 mb-2">SAMPLE COPY</div>
+              <blockquote class="font-serif italic text-base text-ink-900/80 border-l-2 border-brand-500 pl-4 leading-relaxed">
+                "Untuk kulit sensitif, kena pilih yang lembut. Sihaté guna minyak zaitun gred terbaik — no harsh chemicals. Kalau gatal selepas 7 hari, refund. Senang."
+              </blockquote>
+            </div>
+          </div>
+
+          <button class="mt-6 px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100 inline-flex items-center gap-2">
+            <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit brand voice
+          </button>
+        </div>
+
+        <aside class="col-span-5 space-y-4">
+          <div class="bg-ink-900 text-white rounded-2xl p-6 relative overflow-hidden">
+            <div class="absolute -bottom-20 -right-20 w-64 h-64 rounded-full bg-brand-500/15 blur-3xl"></div>
+            <div class="relative">
+              <div class="text-[10px] tracking-widest text-brand-400 font-semibold mb-3">AI · LIVE PREVIEW</div>
+              <p class="text-sm text-white/80 leading-relaxed font-serif italic">
+                "Sensitive skin tak boleh sembarang sabun. Sihaté pilih minyak zaitun yang tak buat kulit gatal — halal, lembut, refundable kalau tak puas."
+              </p>
+              <div class="text-[11px] text-white/40 mt-3">A poster caption that AI would write right now.</div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50 mb-3">CONSISTENCY SCORE</div>
+            <div class="flex items-end gap-3">
+              <div class="font-display text-4xl">87<span class="text-base text-ink-900/40">%</span></div>
+              <div class="text-[11px] text-emerald-600 pb-1.5 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +4% this week</div>
+            </div>
+            <p class="text-xs text-ink-900/60 mt-2">Across the last 22 generated pieces, AI followed brand voice rules 87% of the time.</p>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ===== Tab: Versions ===== -->
+      <div id="pd-pane-versions" class="pd-pane px-8 py-8" hidden>
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+          <div class="px-6 py-4 border-b border-ink-200">
+            <h3 class="font-display text-xl font-semibold">Version history</h3>
+            <p class="text-xs text-ink-900/50 mt-0.5">Every change to product master is tracked.</p>
+          </div>
+          <ul class="divide-y divide-ink-100 text-sm">
+            <li class="px-6 py-4 flex items-center gap-4 hover:bg-ink-50/50">
+              <div class="w-8 h-8 rounded-full bg-emerald-50 grid place-items-center text-emerald-600 shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div>
+              <div class="flex-1">
+                <div class="font-medium">v 3.2 · current</div>
+                <div class="text-[11px] text-ink-900/50">Updated USP — added "cruelty-free" · by <span class="font-medium text-ink-900">@diah</span> · 2 hours ago</div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Current</span>
+            </li>
+            <li class="px-6 py-4 flex items-center gap-4 hover:bg-ink-50/50">
+              <div class="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-ink-900/60 shrink-0 text-xs font-mono">3.1</div>
+              <div class="flex-1">
+                <div>Updated target audience — narrowed to "halal-conscious"</div>
+                <div class="text-[11px] text-ink-900/50">by <span class="font-medium text-ink-900">@ali</span> · yesterday</div>
+              </div>
+              <button class="text-xs text-brand-600 hover:underline">Compare</button>
+              <button class="text-xs text-ink-900/60 hover:text-ink-900">Restore</button>
+            </li>
+            <li class="px-6 py-4 flex items-center gap-4 hover:bg-ink-50/50">
+              <div class="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-ink-900/60 shrink-0 text-xs font-mono">3.0</div>
+              <div class="flex-1">
+                <div>Major rewrite of brand voice — added "do's & don'ts"</div>
+                <div class="text-[11px] text-ink-900/50">by <span class="font-medium text-ink-900">@diah</span> · 6 days ago</div>
+              </div>
+              <button class="text-xs text-brand-600 hover:underline">Compare</button>
+              <button class="text-xs text-ink-900/60 hover:text-ink-900">Restore</button>
+            </li>
+            <li class="px-6 py-4 flex items-center gap-4 hover:bg-ink-50/50">
+              <div class="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-ink-900/60 shrink-0 text-xs font-mono">2.4</div>
+              <div class="flex-1">
+                <div>Price adjusted: RM 22 → RM 25</div>
+                <div class="text-[11px] text-ink-900/50">by <span class="font-medium text-ink-900">@ali</span> · 2 weeks ago</div>
+              </div>
+              <button class="text-xs text-brand-600 hover:underline">Compare</button>
+              <button class="text-xs text-ink-900/60 hover:text-ink-900">Restore</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Linked Content ===== -->
+      <div id="pd-pane-content" class="pd-pane px-8 py-8" hidden>
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-display text-xl font-semibold">Linked content</h3>
+            <p class="text-xs text-ink-900/50">All AI-generated content that pulls from this product.</p>
+          </div>
+          <div class="flex gap-1 text-xs">
+            <button class="px-2.5 py-1 rounded-md bg-ink-100 font-medium">All <span class="font-mono text-ink-900/40">28</span></button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Posters <span class="font-mono text-ink-900/40">19</span></button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Videos <span class="font-mono text-ink-900/40">7</span></button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Salespages <span class="font-mono text-ink-900/40">2</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl border border-ink-200 overflow-hidden hover:shadow-soft transition">
+            <div class="aspect-[4/5] bg-gradient-to-br from-emerald-200 to-emerald-400 relative">
+              <span class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded bg-white/90 font-mono">POSTER · 9:16</span>
+            </div>
+            <div class="p-3">
+              <div class="text-sm font-medium truncate">"Sensitive skin tak boleh sembarang"</div>
+              <div class="text-[11px] text-ink-900/50 mt-0.5">Trust angle · published Mon</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-ink-200 overflow-hidden hover:shadow-soft transition">
+            <div class="aspect-[4/5] bg-gradient-to-br from-amber-200 to-amber-400 relative">
+              <span class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded bg-white/90 font-mono">POSTER · 1:1</span>
+            </div>
+            <div class="p-3">
+              <div class="text-sm font-medium truncate">"15 tahun cari sabun…"</div>
+              <div class="text-[11px] text-ink-900/50 mt-0.5">Story angle · scheduled</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-ink-200 overflow-hidden hover:shadow-soft transition">
+            <div class="aspect-[4/5] bg-gradient-to-br from-rose-200 to-rose-400 relative">
+              <span class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded bg-white/90 font-mono">VIDEO · 9:16</span>
+              <span class="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded bg-black/60 text-white font-mono">0:38</span>
+            </div>
+            <div class="p-3">
+              <div class="text-sm font-medium truncate">Tutorial · "Skin barrier 101"</div>
+              <div class="text-[11px] text-ink-900/50 mt-0.5">Educational · live</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-ink-200 overflow-hidden hover:shadow-soft transition">
+            <div class="aspect-[4/5] bg-gradient-to-br from-sky-200 to-sky-400 relative grid place-items-center text-sky-800">
+              <i data-lucide="file-text" class="w-10 h-10"></i>
+              <span class="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 rounded bg-white/90 font-mono">SALESPAGE</span>
+            </div>
+            <div class="p-3">
+              <div class="text-sm font-medium truncate">Raya Olive Promo</div>
+              <div class="text-[11px] text-ink-900/50 mt-0.5">/raya-olive-promo · 247 views</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: PRODUCT NEW / EDIT ============== -->
+    <section id="view-product-new" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <button data-go="products" class="text-[11px] text-ink-900/50 hover:text-ink-900 inline-flex items-center gap-1 mb-2">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Product Hub
+            </button>
+            <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">NEW PRODUCT</div>
+            <h1 class="font-display text-4xl font-semibold">Add a product.</h1>
+            <p class="text-ink-900/60 mt-1 text-sm">The more detail you give, the smarter the AI suggestions get.</p>
+          </div>
+          <div class="flex gap-2">
+            <button data-go="products" class="px-3 py-2 text-xs rounded-md border border-ink-200 hover:bg-ink-100">Cancel</button>
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100">Save as draft</button>
+            <button data-go="product-detail" class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i> Create product
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Form -->
+          <div class="col-span-12 lg:col-span-8 space-y-6">
+
+            <!-- Basics -->
+            <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+              <div class="flex items-center gap-2 mb-5">
+                <span class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-[10px] font-semibold">1</span>
+                <h3 class="font-display text-lg font-semibold">Basics</h3>
+              </div>
+              <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2">
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Product name <span class="text-flame-600">*</span></label>
+                  <input class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">SKU</label>
+                  <input placeholder="auto-generated" class="w-full px-3 py-2.5 text-sm rounded-md bg-ink-50 border border-ink-200 focus:outline-none focus:border-brand-500 transition font-mono" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Category <span class="text-flame-600">*</span></label>
+                  <select class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition">
+                    <option>Select…</option>
+                    <option>Personal Care · Skincare</option>
+                    <option>Food · Health</option>
+                    <option>Fashion · Modest</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Price <span class="text-flame-600">*</span></label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-900/40 font-mono">RM</span>
+                    <input placeholder="0.00" class="w-full pl-9 pr-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Margin %</label>
+                  <input placeholder="optional" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                </div>
+                <div class="col-span-3">
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Description</label>
+                  <textarea rows="3" placeholder="What is this product, in 2-3 sentences." class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Positioning -->
+            <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+              <div class="flex items-center gap-2 mb-5">
+                <span class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-[10px] font-semibold">2</span>
+                <h3 class="font-display text-lg font-semibold">Positioning</h3>
+              </div>
+              <div class="space-y-5">
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">USP <span class="text-ink-900/40">— 3 to 5 bullets, short and concrete</span></label>
+                  <div class="space-y-2">
+                    <input placeholder="e.g., 100% natural" class="w-full px-3 py-2 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                    <input placeholder="e.g., Halal-certified" class="w-full px-3 py-2 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                    <input placeholder="e.g., Sensitive-skin friendly" class="w-full px-3 py-2 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                    <button class="text-xs text-brand-600 hover:underline inline-flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add another</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Target audience</label>
+                  <input placeholder="e.g., Women 25–45 · urban · sensitive skin" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Pain point you solve</label>
+                  <textarea rows="2" placeholder="What problem does this product solve? Be specific." class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Brand voice -->
+            <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+              <div class="flex items-center gap-2 mb-5">
+                <span class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-[10px] font-semibold">3</span>
+                <h3 class="font-display text-lg font-semibold">Brand voice</h3>
+                <span class="text-[11px] text-ink-900/40">— optional, but improves AI output</span>
+              </div>
+              <div class="space-y-5">
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-2">Tone (pick up to 3)</label>
+                  <div class="flex flex-wrap gap-2">
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Warm</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Caring</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Trustworthy</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Bold</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Playful</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Authoritative</label>
+                    <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Minimal</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Don'ts</label>
+                  <textarea rows="2" placeholder="Anything AI must avoid (medical claims, competitor names, etc.)" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition resize-none"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Sample copy <span class="text-ink-900/40">— 2-3 existing posts to teach AI your voice</span></label>
+                  <textarea rows="3" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Assets -->
+            <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+              <div class="flex items-center gap-2 mb-5">
+                <span class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-[10px] font-semibold">4</span>
+                <h3 class="font-display text-lg font-semibold">Assets</h3>
+                <span class="text-[11px] text-ink-900/40">— upload now or later</span>
+              </div>
+              <div class="border-2 border-dashed border-ink-200 rounded-lg p-8 text-center hover:border-brand-500 hover:bg-brand-50/30 transition cursor-pointer">
+                <i data-lucide="upload-cloud" class="w-8 h-8 text-ink-900/30 mx-auto mb-2"></i>
+                <div class="text-sm text-ink-900/70">Drop product photos, logo, or raw video here</div>
+                <div class="text-[11px] text-ink-900/40 mt-1">or <span class="text-brand-600">browse files</span> · PNG, JPG, MP4 · up to 50 MB each</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar tip -->
+          <aside class="col-span-12 lg:col-span-4 space-y-4">
+            <div class="bg-ink-900 text-white rounded-2xl p-6 relative overflow-hidden sticky top-20">
+              <div class="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-brand-500/15 blur-3xl"></div>
+              <div class="relative">
+                <div class="text-[10px] tracking-widest text-brand-400 font-semibold mb-3">QUICK TIP</div>
+                <h4 class="font-display text-xl">Better input = better AI output.</h4>
+                <p class="text-sm text-white/60 mt-2 leading-relaxed">
+                  The richer your product details, the more accurate the AI strategy. Even rough notes for USP and target audience help — you can refine later.
+                </p>
+                <div class="mt-5 pt-5 border-t border-white/10">
+                  <div class="text-[10px] tracking-widest text-white/40 mb-2">CHECKLIST</div>
+                  <ul class="text-xs space-y-1.5">
+                    <li class="flex items-center gap-2"><i data-lucide="circle" class="w-3 h-3 text-white/30"></i> Name + category</li>
+                    <li class="flex items-center gap-2"><i data-lucide="circle" class="w-3 h-3 text-white/30"></i> 3+ USP bullets</li>
+                    <li class="flex items-center gap-2"><i data-lucide="circle" class="w-3 h-3 text-white/30"></i> Target audience</li>
+                    <li class="flex items-center gap-2"><i data-lucide="circle" class="w-3 h-3 text-white/30"></i> At least 1 product photo</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: AI CONTENT STUDIO ============== -->
+    <section id="view-studio" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="mb-6">
+          <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 02 · GENERATION</div>
+          <h1 class="font-display text-4xl font-semibold">AI Content Studio</h1>
+          <p class="text-ink-900/60 mt-1 text-sm max-w-2xl">Not a generator. <em class="font-serif">A strategist.</em> Feed product info → AI analyzes & strategizes → smart suggestions → pick & generate.</p>
+        </div>
+
+        <!-- 3 output choices -->
+        <div class="grid grid-cols-3 gap-4 mb-10">
+          <div class="bg-white rounded-2xl border-2 border-brand-500 p-5 ring-4 ring-brand-500/10 cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="w-11 h-11 rounded-lg bg-brand-50 grid place-items-center text-brand-600"><i data-lucide="image" class="w-5 h-5"></i></div>
+              <span class="text-[10px] tracking-widest text-brand-600 font-semibold">SELECTED</span>
+            </div>
+            <div class="font-display text-xl mt-3">Poster AI</div>
+            <ul class="mt-3 text-[12px] text-ink-900/60 space-y-1">
+              <li>• Static 1:1, 4:5, 9:16</li>
+              <li>• Brand-locked colors & fonts</li>
+              <li>• A/B test variants ready</li>
+            </ul>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 p-5 hover:border-brand-500 hover:shadow-soft transition cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="w-11 h-11 rounded-lg bg-ink-100 grid place-items-center text-ink-900"><i data-lucide="video" class="w-5 h-5"></i></div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-600 ring-1 ring-flame-200">Phase 2</span>
+            </div>
+            <div class="font-display text-xl mt-3">Video AI</div>
+            <ul class="mt-3 text-[12px] text-ink-900/60 space-y-1">
+              <li>• Short-form reels</li>
+              <li>• Talking-head + AI voice</li>
+              <li>• Auto subtitles</li>
+            </ul>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 p-5 hover:border-brand-500 hover:shadow-soft transition cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="w-11 h-11 rounded-lg bg-ink-100 grid place-items-center text-ink-900"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-600 ring-1 ring-flame-200">Phase 2</span>
+            </div>
+            <div class="font-display text-xl mt-3">Salespage AI</div>
+            <ul class="mt-3 text-[12px] text-ink-900/60 space-y-1">
+              <li>• Full HTML landing page</li>
+              <li>• PAS / AIDA framework</li>
+              <li>• Hosted on the platform</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Wizard -->
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+          <!-- Stepper -->
+          <div class="border-b border-ink-200 px-6 py-4 bg-ink-50/50">
+            <div class="flex items-center gap-3 text-sm">
+              <div class="flex items-center gap-2 text-brand-600 font-medium">
+                <div class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-xs">1</div>
+                Pick product
+              </div>
+              <div class="flex-1 h-px bg-brand-500"></div>
+              <div class="flex items-center gap-2 text-brand-600 font-medium">
+                <div class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-xs">2</div>
+                AI strategy
+              </div>
+              <div class="flex-1 h-px bg-brand-500"></div>
+              <div class="flex items-center gap-2 font-medium">
+                <div class="w-6 h-6 rounded-full bg-ink-900 text-white grid place-items-center text-xs">3</div>
+                Suggestions
+              </div>
+              <div class="flex-1 h-px bg-ink-200"></div>
+              <div class="flex items-center gap-2 text-ink-900/40">
+                <div class="w-6 h-6 rounded-full border-2 border-ink-200 grid place-items-center text-xs">4</div>
+                Generate
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-12 gap-0">
+            <!-- Left: AI strategy panel -->
+            <div class="col-span-5 border-r border-ink-200 p-6 bg-ink-900 text-white relative overflow-hidden">
+              <div class="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-brand-500/20 blur-2xl"></div>
+              <div class="relative">
+                <div class="flex items-center gap-2 text-[11px] tracking-widest text-brand-400 font-semibold mb-3">
+                  <span class="relative inline-block w-1.5 h-1.5 rounded-full bg-brand-400 pulse-dot text-brand-400"></span>
+                  AI ANALYZING
+                </div>
+                <h3 class="font-display text-2xl">Sihaté Olive Soap</h3>
+                <p class="text-white/50 text-xs mt-1">Personal Care · Skincare · RM 25.00</p>
+
+                <div class="mt-6 space-y-3 text-sm">
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="users" class="w-4 h-4 text-brand-400 mt-0.5"></i>
+                    <div><div class="text-white/80">Target audience</div><div class="text-white/50 text-xs">Women 25–45, sensitive skin, urban</div></div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-brand-400 mt-0.5"></i>
+                    <div><div class="text-white/80">Trending angle</div><div class="text-white/50 text-xs">"Skin-barrier repair" up 240% this month</div></div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="search" class="w-4 h-4 text-brand-400 mt-0.5"></i>
+                    <div><div class="text-white/80">Competitor scan</div><div class="text-white/50 text-xs">3 competitors · gap in "natural + halal"</div></div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="zap" class="w-4 h-4 text-brand-400 mt-0.5"></i>
+                    <div><div class="text-white/80">Format fit</div><div class="text-white/50 text-xs">Poster carousel + before/after performs best</div></div>
+                  </div>
+                </div>
+
+                <div class="mt-6 p-3 rounded-lg bg-white/5 ring-1 ring-white/10 text-xs text-white/70 italic">
+                  "For this product, the highest-converting hook is <span class="text-brand-400 not-italic">'Sensitive skin doesn't tolerate just anything'</span> — lean on trust, avoid generic claims."
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: suggestions -->
+            <div class="col-span-7 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="font-display text-xl font-semibold">Smart suggestions</h3>
+                  <p class="text-xs text-ink-900/50">Pick one — or combine 2–3 for A/B testing.</p>
+                </div>
+                <button class="text-xs text-brand-600 hover:underline">Regenerate</button>
+              </div>
+
+              <div class="space-y-3">
+                <label class="flex gap-4 p-4 rounded-xl border-2 border-brand-500 bg-brand-50/30 cursor-pointer">
+                  <input type="checkbox" checked class="mt-1 accent-brand-500" />
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] tracking-widest text-brand-600 font-semibold">HOOK 01</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">Trust angle</span>
+                    </div>
+                    <div class="font-display text-lg mt-1">"Sensitive skin doesn't tolerate just anything."</div>
+                    <p class="text-xs text-ink-900/60 mt-1">5-panel carousel · before/after · CTA: "Try 7 days, full refund if you're not happy."</p>
+                  </div>
+                </label>
+
+                <label class="flex gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 cursor-pointer">
+                  <input type="checkbox" checked class="mt-1 accent-brand-500" />
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] tracking-widest text-brand-600 font-semibold">HOOK 02</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">Story angle</span>
+                    </div>
+                    <div class="font-display text-lg mt-1">"15 years searching for a soap that didn't itch."</div>
+                    <p class="text-xs text-ink-900/60 mt-1">Static 9:16 poster · testimonial from Aisyah, 32 · CTA: "Order on WhatsApp."</p>
+                  </div>
+                </label>
+
+                <label class="flex gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 cursor-pointer">
+                  <input type="checkbox" class="mt-1 accent-brand-500" />
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] tracking-widest text-brand-600 font-semibold">HOOK 03</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-700">Authority angle</span>
+                    </div>
+                    <div class="font-display text-lg mt-1">"100% natural. Halal-certified. Not a claim — see the cert."</div>
+                    <p class="text-xs text-ink-900/60 mt-1">Static 1:1 · certificate overlay · CTA: "Buy now."</p>
+                  </div>
+                </label>
+              </div>
+
+              <div class="mt-6 flex items-center justify-between pt-5 border-t border-ink-200">
+                <div class="text-xs text-ink-900/50">2 hooks selected · 6 variants total (3 sizes × 2 hooks)</div>
+                <div class="flex gap-2">
+                  <button data-go="studio-start" class="px-3 py-2 text-sm rounded-md border border-ink-200 hover:bg-ink-100">Back</button>
+                  <button data-go="studio-generating" class="px-4 py-2 text-sm font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+                    Generate 6 posters <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: STUDIO · STEP 1 — PICK PRODUCT ============== -->
+    <section id="view-studio-start" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="mb-6">
+          <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 02 · GENERATION</div>
+          <h1 class="font-display text-4xl font-semibold">What are we creating today?</h1>
+          <p class="text-ink-900/60 mt-1 text-sm">Pick a product, then choose an output. The AI will analyze and suggest.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+          <!-- Stepper -->
+          <div class="border-b border-ink-200 px-6 py-4 bg-ink-50/50">
+            <div class="flex items-center gap-3 text-sm">
+              <div class="flex items-center gap-2 text-brand-600 font-medium">
+                <div class="w-6 h-6 rounded-full bg-brand-500 text-white grid place-items-center text-xs">1</div>
+                Pick product
+              </div>
+              <div class="flex-1 h-px bg-ink-200"></div>
+              <div class="flex items-center gap-2 text-ink-900/40 font-medium">
+                <div class="w-6 h-6 rounded-full border-2 border-ink-200 grid place-items-center text-xs">2</div>
+                AI strategy
+              </div>
+              <div class="flex-1 h-px bg-ink-200"></div>
+              <div class="flex items-center gap-2 text-ink-900/40 font-medium">
+                <div class="w-6 h-6 rounded-full border-2 border-ink-200 grid place-items-center text-xs">3</div>
+                Suggestions
+              </div>
+              <div class="flex-1 h-px bg-ink-200"></div>
+              <div class="flex items-center gap-2 text-ink-900/40">
+                <div class="w-6 h-6 rounded-full border-2 border-ink-200 grid place-items-center text-xs">4</div>
+                Generate
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <!-- Product selector -->
+            <div class="mb-6">
+              <label class="block text-xs font-medium text-ink-900/70 mb-2">Choose a product</label>
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <label class="relative rounded-xl border-2 border-brand-500 bg-brand-50/30 p-4 cursor-pointer ring-4 ring-brand-500/10">
+                  <input type="radio" name="product" checked class="sr-only" />
+                  <div class="absolute top-3 right-3 w-4 h-4 rounded-full bg-brand-500 text-white grid place-items-center"><i data-lucide="check" class="w-3 h-3"></i></div>
+                  <div class="w-9 h-9 rounded-lg bg-brand-100 grid place-items-center text-brand-700 mb-3"><i data-lucide="box" class="w-4 h-4"></i></div>
+                  <div class="font-medium text-sm">Sihaté Olive Soap</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Personal Care · RM 25</div>
+                </label>
+                <label class="relative rounded-xl border border-ink-200 p-4 cursor-pointer hover:border-brand-500">
+                  <input type="radio" name="product" class="sr-only" />
+                  <div class="w-9 h-9 rounded-lg bg-emerald-50 grid place-items-center text-emerald-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                  <div class="font-medium text-sm">Madu Bedaie</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Food · Health</div>
+                </label>
+                <label class="relative rounded-xl border border-ink-200 p-4 cursor-pointer hover:border-brand-500">
+                  <input type="radio" name="product" class="sr-only" />
+                  <div class="w-9 h-9 rounded-lg bg-amber-50 grid place-items-center text-amber-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                  <div class="font-medium text-sm">Tudung Klasik</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Fashion · Modest</div>
+                </label>
+                <label class="relative rounded-xl border border-ink-200 p-4 cursor-pointer hover:border-brand-500">
+                  <input type="radio" name="product" class="sr-only" />
+                  <div class="w-9 h-9 rounded-lg bg-sky-50 grid place-items-center text-sky-600 mb-3"><i data-lucide="package" class="w-4 h-4"></i></div>
+                  <div class="font-medium text-sm">Bedaie Vitamin C</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Health · Supplement</div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Output type -->
+            <div class="mb-6">
+              <label class="block text-xs font-medium text-ink-900/70 mb-2">Choose output type</label>
+              <div class="grid grid-cols-3 gap-3">
+                <label class="relative rounded-xl border-2 border-brand-500 bg-brand-50/30 p-5 cursor-pointer ring-4 ring-brand-500/10">
+                  <input type="radio" name="out" checked class="sr-only" />
+                  <div class="flex items-start justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-brand-100 grid place-items-center text-brand-700"><i data-lucide="image" class="w-5 h-5"></i></div>
+                    <span class="text-[10px] tracking-widest text-brand-600 font-semibold">SELECTED</span>
+                  </div>
+                  <div class="font-display text-lg mt-3">Poster AI</div>
+                  <div class="text-[11px] text-ink-900/60 mt-1">Static · 1:1, 4:5, 9:16</div>
+                </label>
+                <label class="relative rounded-xl border border-ink-200 p-5 cursor-not-allowed opacity-60">
+                  <input type="radio" name="out" disabled class="sr-only" />
+                  <div class="flex items-start justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center text-ink-900"><i data-lucide="video" class="w-5 h-5"></i></div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-600 ring-1 ring-flame-200">Phase 2</span>
+                  </div>
+                  <div class="font-display text-lg mt-3">Video AI</div>
+                  <div class="text-[11px] text-ink-900/60 mt-1">Reels · 9:16</div>
+                </label>
+                <label class="relative rounded-xl border border-ink-200 p-5 cursor-not-allowed opacity-60">
+                  <input type="radio" name="out" disabled class="sr-only" />
+                  <div class="flex items-start justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center text-ink-900"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-600 ring-1 ring-flame-200">Phase 2</span>
+                  </div>
+                  <div class="font-display text-lg mt-3">Salespage AI</div>
+                  <div class="text-[11px] text-ink-900/60 mt-1">HTML landing</div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Goal -->
+            <div class="mb-6">
+              <label class="block text-xs font-medium text-ink-900/70 mb-2">What's the goal? <span class="text-ink-900/40">— optional, helps AI angle</span></label>
+              <div class="flex flex-wrap gap-2">
+                <label class="px-3 py-1.5 rounded-full border-2 border-brand-500 bg-brand-50/30 text-xs cursor-pointer"><input type="radio" name="goal" checked class="sr-only"/>Build awareness</label>
+                <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="radio" name="goal" class="sr-only"/>Drive consideration</label>
+                <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="radio" name="goal" class="sr-only"/>Convert sales</label>
+                <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="radio" name="goal" class="sr-only"/>Retarget existing</label>
+                <label class="px-3 py-1.5 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="radio" name="goal" class="sr-only"/>Launch promotion</label>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-5 border-t border-ink-200">
+              <div class="text-xs text-ink-900/50">Estimated AI cost: ~RM 0.40 for 6 variants</div>
+              <button data-go="studio" class="px-4 py-2 text-sm font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+                Continue · Run AI strategy <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: STUDIO · GENERATING ============== -->
+    <section id="view-studio-generating" class="view" hidden>
+      <div class="px-8 py-8 max-w-3xl mx-auto">
+        <div class="mb-6">
+          <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 02 · GENERATION</div>
+          <h1 class="font-display text-4xl font-semibold">Generating your posters…</h1>
+          <p class="text-ink-900/60 mt-1 text-sm">~2 minutes. You can leave this page — we'll notify you when done.</p>
+        </div>
+
+        <div class="bg-ink-950 text-white rounded-2xl overflow-hidden relative">
+          <div class="absolute inset-0 grid-bg opacity-40"></div>
+          <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-brand-500/20 blur-3xl"></div>
+
+          <div class="relative p-8">
+            <div class="flex items-center gap-2 text-[11px] tracking-widest text-brand-400 font-semibold mb-4">
+              <span class="relative inline-block w-1.5 h-1.5 rounded-full bg-brand-400 pulse-dot text-brand-400"></span>
+              QUEUE WORKER · poster-render-job
+            </div>
+
+            <!-- progress bar -->
+            <div class="mb-6">
+              <div class="flex items-baseline justify-between mb-2">
+                <div class="font-display text-3xl">62<span class="text-white/40 text-base">%</span></div>
+                <div class="text-xs text-white/60 font-mono">4 of 6 variants ready</div>
+              </div>
+              <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-brand-500 to-brand-400" style="width: 62%"></div>
+              </div>
+            </div>
+
+            <!-- pipeline steps -->
+            <ul class="space-y-2 text-sm">
+              <li class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full bg-emerald-500 grid place-items-center text-white"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <span class="text-white/80">LLM generated copy for 2 hooks</span>
+                <span class="ml-auto text-[11px] text-white/40 font-mono">8s</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full bg-emerald-500 grid place-items-center text-white"><i data-lucide="check" class="w-3 h-3"></i></div>
+                <span class="text-white/80">Generated 6 base images (3 sizes × 2 hooks)</span>
+                <span class="ml-auto text-[11px] text-white/40 font-mono">42s</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <div class="w-5 h-5 rounded-full bg-brand-500 grid place-items-center text-white relative">
+                  <div class="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <span class="text-white">Compositing brand kit (logo + typography)…</span>
+                <span class="ml-auto text-[11px] text-brand-400 font-mono">in progress</span>
+              </li>
+              <li class="flex items-center gap-3 opacity-50">
+                <div class="w-5 h-5 rounded-full bg-white/10 grid place-items-center text-white/40 text-[10px]">4</div>
+                <span class="text-white/50">Validating brand voice consistency</span>
+              </li>
+              <li class="flex items-center gap-3 opacity-50">
+                <div class="w-5 h-5 rounded-full bg-white/10 grid place-items-center text-white/40 text-[10px]">5</div>
+                <span class="text-white/50">Uploading to asset store</span>
+              </li>
+            </ul>
+
+            <div class="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
+              <div class="text-[11px] text-white/40">
+                Job ID <span class="font-mono text-white/70">job_01HG9PQ8</span> · started 1m 24s ago
+              </div>
+              <div class="flex gap-2">
+                <button class="px-3 py-2 text-xs rounded-md border border-white/15 text-white/70 hover:bg-white/5">Cancel</button>
+                <button data-go="dashboard" class="px-3 py-2 text-xs rounded-md bg-white/10 hover:bg-white/15">Run in background</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview tiles trickling in -->
+        <div class="mt-6 grid grid-cols-6 gap-3">
+          <div class="aspect-[4/5] rounded-lg bg-gradient-to-br from-emerald-200 to-emerald-400"></div>
+          <div class="aspect-[4/5] rounded-lg bg-gradient-to-br from-amber-200 to-amber-400"></div>
+          <div class="aspect-[4/5] rounded-lg bg-gradient-to-br from-rose-200 to-rose-400"></div>
+          <div class="aspect-[4/5] rounded-lg bg-gradient-to-br from-sky-200 to-sky-400"></div>
+          <div class="aspect-[4/5] rounded-lg bg-ink-100 grid place-items-center text-ink-900/30">
+            <div class="w-5 h-5 border-2 border-ink-300 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div class="aspect-[4/5] rounded-lg bg-ink-100"></div>
+        </div>
+
+        <div class="mt-6 text-center">
+          <button data-go="studio-results" class="text-xs text-brand-600 hover:underline">[ Demo: skip to results → ]</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: STUDIO · RESULTS ============== -->
+    <section id="view-studio-results" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <div class="flex items-center gap-2 text-[11px] tracking-widest mb-2">
+              <span class="text-emerald-600 font-semibold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> COMPLETED</span>
+              <span class="text-ink-900/40">·</span>
+              <span class="text-ink-900/50">2m 14s · RM 0.38 spent</span>
+            </div>
+            <h1 class="font-display text-4xl font-semibold">6 posters ready.</h1>
+            <p class="text-ink-900/60 mt-1 text-sm">Pick your favorites, download, or send to review.</p>
+          </div>
+          <div class="flex gap-2">
+            <button data-go="studio" class="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100 flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Regenerate
+            </button>
+            <button data-go="export-modal" class="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100 flex items-center gap-2">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Download all
+            </button>
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i> Send to review
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex gap-1 text-xs">
+            <button class="px-2.5 py-1 rounded-md bg-ink-100 font-medium">All <span class="font-mono text-ink-900/40">6</span></button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Hook 01 · Trust</button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Hook 02 · Story</button>
+          </div>
+          <div class="flex gap-1 text-xs">
+            <button class="px-2.5 py-1 rounded-md bg-ink-100 font-medium">All sizes</button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">1:1</button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">4:5</button>
+            <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">9:16</button>
+          </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="grid grid-cols-3 gap-5">
+          <!-- Card 1 -->
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-emerald-200 to-emerald-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">9:16</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-brand-500 text-white font-semibold">HOOK 01</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-3xl text-emerald-900 leading-tight">"Sensitive skin doesn't tolerate just anything."</div>
+                </div>
+              </div>
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/90 hover:bg-white">Preview</button>
+                <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/90 hover:bg-white">Download</button>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="hover:text-flame-600 transition flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 3</button>
+                <button class="hover:text-brand-600 transition flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 1</button>
+              </div>
+              <button class="text-ink-900/60 hover:text-ink-900"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-amber-200 to-amber-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">4:5</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-brand-500 text-white font-semibold">HOOK 01</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-2xl text-amber-900 leading-tight">"Try 7 days. Refund if it itches."</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 0</button>
+                <button class="flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 0</button>
+              </div>
+              <button class="text-ink-900/60"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-rose-200 to-rose-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">1:1</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-brand-500 text-white font-semibold">HOOK 01</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-2xl text-rose-900 leading-tight">"Sensitive skin? Try the soap that won't fight back."</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 1</button>
+                <button class="flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 0</button>
+              </div>
+              <button class="text-ink-900/60"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-violet-200 to-violet-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">9:16</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-flame-500 text-white font-semibold">HOOK 02</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-3xl text-violet-900 leading-tight italic">"15 years searching for a soap that didn't itch."</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 2</button>
+                <button class="flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 0</button>
+              </div>
+              <button class="text-ink-900/60"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-sky-200 to-sky-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">4:5</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-flame-500 text-white font-semibold">HOOK 02</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-2xl text-sky-900 leading-tight italic">"Aisyah, 32: 'Finally — kulit tak gatal lagi.'"</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 0</button>
+                <button class="flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 0</button>
+              </div>
+              <button class="text-ink-900/60"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden group">
+            <div class="aspect-[4/5] bg-gradient-to-br from-fuchsia-200 to-fuchsia-400 relative">
+              <span class="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-white/90 font-mono font-semibold">1:1</span>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded bg-flame-500 text-white font-semibold">HOOK 02</span>
+              <div class="absolute inset-0 grid place-items-center p-6">
+                <div class="text-center">
+                  <div class="font-display text-2xl text-fuchsia-900 leading-tight italic">"Her skin journey — one bar of soap at a time."</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3 text-ink-900/60">
+                <button class="flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i> 1</button>
+                <button class="flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> 0</button>
+              </div>
+              <button class="text-ink-900/60"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer summary -->
+        <div class="mt-8 bg-white rounded-xl border border-ink-200 shadow-soft p-5 flex items-center gap-4">
+          <i data-lucide="lightbulb" class="w-5 h-5 text-flame-500 shrink-0"></i>
+          <div class="flex-1 text-sm">
+            <span class="font-medium">Pro tip:</span> <span class="text-ink-900/70">based on past performance, <span class="font-medium text-emerald-700">Hook 01 (Trust)</span> historically outperforms by 38% on Meta. Consider boosting it first.</span>
+          </div>
+          <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950">Pick winner</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: AUTO POSTING ============== -->
+    <section id="view-posting" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 03 · DISTRIBUTION</div>
+            <h1 class="font-display text-4xl font-semibold">Auto Posting</h1>
+            <p class="text-ink-900/60 mt-1 text-sm">Generated content — schedule & publish without leaving the system.</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100 flex items-center gap-2">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Month view
+            </button>
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+              <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i> New schedule
+            </button>
+          </div>
+        </div>
+
+        <!-- Connected platforms -->
+        <div class="bg-white border border-ink-200 rounded-xl p-5 mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-[11px] tracking-widest text-ink-900/50 font-semibold">CONNECTED PLATFORMS</div>
+            <button class="text-xs text-brand-600 hover:underline">+ Connect new</button>
+          </div>
+          <div class="flex gap-3 flex-wrap">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-50 border border-ink-200">
+              <div class="w-7 h-7 rounded bg-black grid place-items-center text-white text-[10px] font-bold">TT</div>
+              <div class="text-sm"><div class="font-medium leading-none">TikTok</div><div class="text-[11px] text-emerald-600 mt-0.5">@sihate.official</div></div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-50 border border-ink-200">
+              <div class="w-7 h-7 rounded bg-gradient-to-br from-fuchsia-500 to-amber-500 grid place-items-center text-white"><i data-lucide="instagram" class="w-3.5 h-3.5"></i></div>
+              <div class="text-sm"><div class="font-medium leading-none">Instagram</div><div class="text-[11px] text-emerald-600 mt-0.5">@sihate.id</div></div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-50 border border-ink-200">
+              <div class="w-7 h-7 rounded bg-blue-600 grid place-items-center text-white"><i data-lucide="facebook" class="w-3.5 h-3.5"></i></div>
+              <div class="text-sm"><div class="font-medium leading-none">Facebook</div><div class="text-[11px] text-emerald-600 mt-0.5">Sihaté Official</div></div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-50 border border-ink-200">
+              <div class="w-7 h-7 rounded bg-red-600 grid place-items-center text-white"><i data-lucide="youtube" class="w-3.5 h-3.5"></i></div>
+              <div class="text-sm"><div class="font-medium leading-none">YT Shorts</div><div class="text-[11px] text-ink-900/40 mt-0.5">not connected</div></div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-ink-50 border border-ink-200 opacity-60">
+              <div class="w-7 h-7 rounded bg-ink-900 grid place-items-center text-white text-[10px] font-bold">@</div>
+              <div class="text-sm"><div class="font-medium leading-none">Threads</div><div class="text-[11px] text-ink-900/40 mt-0.5">not connected</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Week schedule -->
+        <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+          <div class="px-6 py-4 border-b border-ink-200 flex items-center justify-between">
+            <div>
+              <h3 class="font-display text-xl font-semibold">Schedule · This week</h3>
+              <p class="text-xs text-ink-900/50 mt-0.5">May 12 – 18, 2026 · 5 posts queued</p>
+            </div>
+            <div class="flex items-center gap-1 text-xs">
+              <button class="px-2 py-1 rounded hover:bg-ink-100"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button class="px-3 py-1 rounded hover:bg-ink-100 font-medium">Today</button>
+              <button class="px-2 py-1 rounded hover:bg-ink-100"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <div class="divide-y divide-ink-100">
+            <!-- MON -->
+            <div class="flex hover:bg-ink-50/50 transition">
+              <div class="w-24 shrink-0 py-4 px-6 border-r border-ink-100">
+                <div class="text-[11px] tracking-widest text-ink-900/40">MON</div>
+                <div class="font-display text-2xl">12</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">10:00</div>
+              </div>
+              <div class="flex-1 py-4 px-6 flex items-center gap-4">
+                <div class="w-1 h-10 rounded-full bg-brand-500"></div>
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-200 to-emerald-400 shrink-0"></div>
+                <div class="flex-1">
+                  <div class="font-medium">Sihaté reel #14 · "Skin barrier 101"</div>
+                  <div class="text-[11px] text-ink-900/50 mt-1 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><i data-lucide="hash" class="w-3 h-3"></i> Video 9:16</span>
+                    <span class="flex items-center gap-1"><i data-lucide="package" class="w-3 h-3"></i> Sihaté Olive Soap</span>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <div class="w-6 h-6 rounded bg-black grid place-items-center text-white text-[9px] font-bold">TT</div>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Scheduled</span>
+              </div>
+            </div>
+
+            <!-- TUE -->
+            <div class="flex hover:bg-ink-50/50 transition">
+              <div class="w-24 shrink-0 py-4 px-6 border-r border-ink-100">
+                <div class="text-[11px] tracking-widest text-ink-900/40">TUE</div>
+                <div class="font-display text-2xl">13</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">14:30</div>
+              </div>
+              <div class="flex-1 py-4 px-6 flex items-center gap-4">
+                <div class="w-1 h-10 rounded-full bg-brand-500"></div>
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-200 to-amber-400 shrink-0"></div>
+                <div class="flex-1">
+                  <div class="font-medium">Poster carousel · Before / After</div>
+                  <div class="text-[11px] text-ink-900/50 mt-1 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><i data-lucide="image" class="w-3 h-3"></i> 5-panel carousel</span>
+                    <span class="flex items-center gap-1"><i data-lucide="package" class="w-3 h-3"></i> Sihaté Olive Soap</span>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <div class="w-6 h-6 rounded bg-blue-600 grid place-items-center text-white"><i data-lucide="facebook" class="w-3 h-3"></i></div>
+                  <div class="w-6 h-6 rounded bg-gradient-to-br from-fuchsia-500 to-amber-500 grid place-items-center text-white"><i data-lucide="instagram" class="w-3 h-3"></i></div>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">Pending review</span>
+              </div>
+            </div>
+
+            <!-- WED -->
+            <div class="flex hover:bg-ink-50/50 transition">
+              <div class="w-24 shrink-0 py-4 px-6 border-r border-ink-100">
+                <div class="text-[11px] tracking-widest text-ink-900/40">WED</div>
+                <div class="font-display text-2xl">14</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">09:00</div>
+              </div>
+              <div class="flex-1 py-4 px-6 flex items-center gap-4">
+                <div class="w-1 h-10 rounded-full bg-flame-500"></div>
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-rose-200 to-rose-400 shrink-0"></div>
+                <div class="flex-1">
+                  <div class="font-medium">Tutorial · "How to use it on sensitive skin"</div>
+                  <div class="text-[11px] text-ink-900/50 mt-1 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><i data-lucide="hash" class="w-3 h-3"></i> Video 9:16</span>
+                    <span class="flex items-center gap-1"><i data-lucide="package" class="w-3 h-3"></i> Sihaté Olive Soap</span>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <div class="w-6 h-6 rounded bg-black grid place-items-center text-white text-[9px] font-bold">TT</div>
+                  <div class="w-6 h-6 rounded bg-red-600 grid place-items-center text-white"><i data-lucide="youtube" class="w-3 h-3"></i></div>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-flame-50 text-flame-700 ring-1 ring-flame-200">Draft</span>
+              </div>
+            </div>
+
+            <!-- THU -->
+            <div class="flex hover:bg-ink-50/50 transition">
+              <div class="w-24 shrink-0 py-4 px-6 border-r border-ink-100">
+                <div class="text-[11px] tracking-widest text-ink-900/40">THU</div>
+                <div class="font-display text-2xl">15</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">19:00</div>
+              </div>
+              <div class="flex-1 py-4 px-6 flex items-center gap-4">
+                <div class="w-1 h-10 rounded-full bg-brand-500"></div>
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-200 to-violet-400 shrink-0"></div>
+                <div class="flex-1">
+                  <div class="font-medium">IG Story · UGC repost</div>
+                  <div class="text-[11px] text-ink-900/50 mt-1 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><i data-lucide="image" class="w-3 h-3"></i> Story format</span>
+                    <span class="flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> @aisyah_skin</span>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <div class="w-6 h-6 rounded bg-gradient-to-br from-fuchsia-500 to-amber-500 grid place-items-center text-white"><i data-lucide="instagram" class="w-3 h-3"></i></div>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Scheduled</span>
+              </div>
+            </div>
+
+            <!-- FRI -->
+            <div class="flex hover:bg-ink-50/50 transition">
+              <div class="w-24 shrink-0 py-4 px-6 border-r border-ink-100">
+                <div class="text-[11px] tracking-widest text-ink-900/40">FRI</div>
+                <div class="font-display text-2xl">16</div>
+                <div class="text-[11px] text-ink-900/50 mt-0.5">11:00</div>
+              </div>
+              <div class="flex-1 py-4 px-6 flex items-center gap-4">
+                <div class="w-1 h-10 rounded-full bg-flame-500"></div>
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-sky-200 to-sky-400 shrink-0 grid place-items-center text-sky-700"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+                <div class="flex-1">
+                  <div class="font-medium">Salespage drop · Raya Olive Promo</div>
+                  <div class="text-[11px] text-ink-900/50 mt-1 flex items-center gap-3">
+                    <span class="flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> /raya-olive-promo</span>
+                    <span class="flex items-center gap-1"><i data-lucide="megaphone" class="w-3 h-3"></i> linked to 3 ads</span>
+                  </div>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Scheduled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: ADS INTEGRATION ============== -->
+    <section id="view-ads" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">MODULE 04 · PERFORMANCE</div>
+            <h1 class="font-display text-4xl font-semibold">Ads Integration</h1>
+            <p class="text-ink-900/60 mt-1 text-sm">Pull data in, push campaigns out — all from here.</p>
+          </div>
+          <div class="flex gap-2">
+            <select class="px-3 py-2 text-xs rounded-md bg-white border border-ink-200">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>This month</option>
+            </select>
+            <button class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Create campaign
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="grid grid-cols-5 gap-3 mb-6">
+          <div class="col-span-1 bg-white border border-ink-200 rounded-xl p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50">SPEND</div>
+            <div class="font-display text-2xl mt-1">RM 4,820</div>
+            <div class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> 12% vs prev</div>
+          </div>
+          <div class="col-span-1 bg-white border border-ink-200 rounded-xl p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50">IMPRESSIONS</div>
+            <div class="font-display text-2xl mt-1">182k</div>
+            <div class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> 8% vs prev</div>
+          </div>
+          <div class="col-span-1 bg-white border border-ink-200 rounded-xl p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50">CTR</div>
+            <div class="font-display text-2xl mt-1">3.8<span class="text-base text-ink-900/40">%</span></div>
+            <div class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> 0.4pp vs prev</div>
+          </div>
+          <div class="col-span-1 bg-white border border-ink-200 rounded-xl p-5">
+            <div class="text-[10px] tracking-widest text-ink-900/50">CPC</div>
+            <div class="font-display text-2xl mt-1">RM 0.42</div>
+            <div class="text-[11px] text-flame-600 mt-1 flex items-center gap-1"><i data-lucide="trending-down" class="w-3 h-3"></i> 2% vs prev</div>
+          </div>
+          <div class="col-span-1 bg-ink-900 text-white rounded-xl p-5">
+            <div class="text-[10px] tracking-widest text-brand-400">ROAS</div>
+            <div class="font-display text-2xl mt-1">3.4<span class="text-base text-white/40">×</span></div>
+            <div class="text-[11px] text-brand-400 mt-1 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> 0.6× vs prev</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Chart placeholder -->
+          <div class="col-span-12 lg:col-span-8 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-display text-xl font-semibold">Performance · across platforms</h3>
+                <p class="text-xs text-ink-900/50">Daily breakdown · last 7 days</p>
+              </div>
+              <div class="flex gap-3 text-xs">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-black"></span>TikTok</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span>Meta</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-flame-500"></span>Google</span>
+              </div>
+            </div>
+
+            <div class="relative h-56">
+              <svg viewBox="0 0 600 200" class="w-full h-full">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#06B6D4" stop-opacity=".3"/>
+                    <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <g stroke="#E8E7DE" stroke-width="1">
+                  <line x1="0" y1="40"  x2="600" y2="40"/>
+                  <line x1="0" y1="80"  x2="600" y2="80"/>
+                  <line x1="0" y1="120" x2="600" y2="120"/>
+                  <line x1="0" y1="160" x2="600" y2="160"/>
+                </g>
+                <path d="M0,140 L100,110 L200,120 L300,80 L400,90 L500,55 L600,70 L600,200 L0,200 Z" fill="url(#g1)"/>
+                <polyline points="0,140 100,110 200,120 300,80 400,90 500,55 600,70"
+                          fill="none" stroke="#000" stroke-width="2"/>
+                <polyline points="0,160 100,140 200,150 300,120 400,100 500,90 600,75"
+                          fill="none" stroke="#3B82F6" stroke-width="2"/>
+                <polyline points="0,175 100,165 200,170 300,150 400,160 500,130 600,140"
+                          fill="none" stroke="#F97316" stroke-width="2"/>
+                <g fill="#000">
+                  <circle cx="0"   cy="140" r="3"/>
+                  <circle cx="100" cy="110" r="3"/>
+                  <circle cx="200" cy="120" r="3"/>
+                  <circle cx="300" cy="80"  r="3"/>
+                  <circle cx="400" cy="90"  r="3"/>
+                  <circle cx="500" cy="55"  r="3"/>
+                  <circle cx="600" cy="70"  r="3"/>
+                </g>
+              </svg>
+              <div class="flex justify-between text-[10px] text-ink-900/40 mt-1">
+                <span>May 5</span><span>May 6</span><span>May 7</span><span>May 8</span><span>May 9</span><span>May 10</span><span>May 11</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top performers -->
+          <div class="col-span-12 lg:col-span-4 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+            <h3 class="font-display text-xl font-semibold mb-4">Top creatives</h3>
+            <div class="space-y-3">
+              <div class="flex gap-3 p-3 rounded-lg bg-emerald-50/40 border border-emerald-100">
+                <div class="w-12 h-12 rounded-md bg-gradient-to-br from-emerald-200 to-emerald-400"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium truncate">"Sensitive skin doesn't…"</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Carousel · TikTok</div>
+                  <div class="text-[11px] text-emerald-700 mt-1 font-medium">ROAS 5.2× · CTR 6.1%</div>
+                </div>
+                <button class="self-start text-[10px] px-2 py-0.5 rounded bg-emerald-600 text-white">Boost</button>
+              </div>
+              <div class="flex gap-3 p-3 rounded-lg border border-ink-100">
+                <div class="w-12 h-12 rounded-md bg-gradient-to-br from-amber-200 to-amber-400"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium truncate">"15 years searching for…"</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Static · Meta</div>
+                  <div class="text-[11px] text-ink-900/70 mt-1 font-medium">ROAS 3.8× · CTR 4.4%</div>
+                </div>
+              </div>
+              <div class="flex gap-3 p-3 rounded-lg border border-ink-100 opacity-70">
+                <div class="w-12 h-12 rounded-md bg-gradient-to-br from-rose-200 to-rose-400"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium truncate">"Raya Olive Promo"</div>
+                  <div class="text-[11px] text-ink-900/50 mt-0.5">Salespage · Meta</div>
+                  <div class="text-[11px] text-flame-700 mt-1 font-medium flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> ROAS down 18%</div>
+                </div>
+                <button class="self-start text-[10px] px-2 py-0.5 rounded border border-flame-300 text-flame-700">Review</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaign list -->
+          <div class="col-span-12 bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+            <div class="px-6 py-4 border-b border-ink-200 flex items-center justify-between">
+              <h3 class="font-display text-xl font-semibold">Active campaigns</h3>
+              <div class="flex gap-1 text-xs">
+                <button class="px-2.5 py-1 rounded-md bg-ink-100 font-medium">All</button>
+                <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">TikTok</button>
+                <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Meta</button>
+                <button class="px-2.5 py-1 rounded-md hover:bg-ink-100">Google</button>
+              </div>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="bg-ink-50/50 text-[11px] tracking-widest text-ink-900/50">
+                <tr>
+                  <th class="text-left font-semibold px-6 py-3">Campaign</th>
+                  <th class="text-left font-semibold px-3 py-3">Platform</th>
+                  <th class="text-right font-semibold px-3 py-3">Spend</th>
+                  <th class="text-right font-semibold px-3 py-3">CTR</th>
+                  <th class="text-right font-semibold px-3 py-3">ROAS</th>
+                  <th class="text-right font-semibold px-6 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-ink-100">
+                <tr class="hover:bg-ink-50/50">
+                  <td class="px-6 py-3"><div class="font-medium">Sihaté · Trust Hook</div><div class="text-[11px] text-ink-900/50">2 creatives · 4 ad sets</div></td>
+                  <td class="px-3 py-3"><span class="text-[11px] px-2 py-0.5 rounded bg-black text-white">TikTok</span></td>
+                  <td class="px-3 py-3 text-right font-mono">RM 1,840</td>
+                  <td class="px-3 py-3 text-right">6.1%</td>
+                  <td class="px-3 py-3 text-right font-semibold text-emerald-700">5.2×</td>
+                  <td class="px-6 py-3 text-right"><span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Active</span></td>
+                </tr>
+                <tr class="hover:bg-ink-50/50">
+                  <td class="px-6 py-3"><div class="font-medium">Sihaté · Story Angle</div><div class="text-[11px] text-ink-900/50">1 creative · 2 ad sets</div></td>
+                  <td class="px-3 py-3"><span class="text-[11px] px-2 py-0.5 rounded bg-blue-600 text-white">Meta</span></td>
+                  <td class="px-3 py-3 text-right font-mono">RM 920</td>
+                  <td class="px-3 py-3 text-right">4.4%</td>
+                  <td class="px-3 py-3 text-right font-semibold">3.8×</td>
+                  <td class="px-6 py-3 text-right"><span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Active</span></td>
+                </tr>
+                <tr class="hover:bg-ink-50/50">
+                  <td class="px-6 py-3"><div class="font-medium">Raya Olive Promo</div><div class="text-[11px] text-ink-900/50">3 creatives · 5 ad sets</div></td>
+                  <td class="px-3 py-3"><span class="text-[11px] px-2 py-0.5 rounded bg-blue-600 text-white">Meta</span></td>
+                  <td class="px-3 py-3 text-right font-mono">RM 1,250</td>
+                  <td class="px-3 py-3 text-right">2.8%</td>
+                  <td class="px-3 py-3 text-right font-semibold text-flame-700">1.9× <i data-lucide="trending-down" class="w-3 h-3 inline -mt-0.5"></i></td>
+                  <td class="px-6 py-3 text-right"><span class="text-[11px] px-2 py-0.5 rounded-full bg-flame-50 text-flame-700 ring-1 ring-flame-200">Alert</span></td>
+                </tr>
+                <tr class="hover:bg-ink-50/50">
+                  <td class="px-6 py-3"><div class="font-medium">Madu Bedaie · Retargeting</div><div class="text-[11px] text-ink-900/50">2 creatives · 2 ad sets</div></td>
+                  <td class="px-3 py-3"><span class="text-[11px] px-2 py-0.5 rounded bg-flame-500 text-white">Google</span></td>
+                  <td class="px-3 py-3 text-right font-mono">RM 810</td>
+                  <td class="px-3 py-3 text-right">5.0%</td>
+                  <td class="px-3 py-3 text-right font-semibold">4.1×</td>
+                  <td class="px-6 py-3 text-right"><span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Active</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: SETTINGS ============== -->
+    <section id="view-settings" class="view" hidden>
+      <div class="px-8 py-8">
+        <div class="mb-6">
+          <div class="text-[11px] tracking-[0.2em] text-brand-600 font-semibold mb-2">WORKSPACE</div>
+          <h1 class="font-display text-4xl font-semibold">Settings</h1>
+          <p class="text-ink-900/60 mt-1 text-sm">Manage profile, team, integrations, and usage.</p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Side tabs -->
+          <aside class="col-span-12 lg:col-span-3">
+            <nav class="bg-white rounded-2xl border border-ink-200 shadow-soft p-2 space-y-0.5 sticky top-20">
+              <button data-st-tab="profile"      class="st-tab st-active w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left">
+                <i data-lucide="user" class="w-4 h-4"></i> Profile
+              </button>
+              <button data-st-tab="team"         class="st-tab w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left hover:bg-ink-100">
+                <i data-lucide="users" class="w-4 h-4"></i> Team
+                <span class="ml-auto text-[10px] font-mono text-ink-900/40">4</span>
+              </button>
+              <button data-st-tab="integrations" class="st-tab w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left hover:bg-ink-100">
+                <i data-lucide="plug" class="w-4 h-4"></i> Integrations
+              </button>
+              <button data-st-tab="usage"        class="st-tab w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left hover:bg-ink-100">
+                <i data-lucide="gauge" class="w-4 h-4"></i> Usage & Billing
+              </button>
+              <button data-st-tab="workspace"    class="st-tab w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left hover:bg-ink-100">
+                <i data-lucide="building" class="w-4 h-4"></i> Workspace
+              </button>
+            </nav>
+          </aside>
+
+          <!-- Panels -->
+          <div class="col-span-12 lg:col-span-9">
+
+            <!-- Profile -->
+            <div id="st-pane-profile" class="st-pane">
+              <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+                <h3 class="font-display text-xl font-semibold mb-1">Profile</h3>
+                <p class="text-xs text-ink-900/50 mb-6">How you appear across the workspace.</p>
+
+                <div class="flex items-center gap-5 mb-6 pb-6 border-b border-ink-100">
+                  <div class="w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-flame-500 grid place-items-center text-2xl font-semibold text-ink-900">BD</div>
+                  <div>
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-100">Upload photo</button>
+                    <button class="ml-2 px-3 py-1.5 text-xs font-medium rounded-md text-flame-700 hover:bg-flame-50">Remove</button>
+                    <p class="text-[11px] text-ink-900/50 mt-1.5">PNG or JPG, at least 200×200.</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 max-w-xl">
+                  <div>
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">First name</label>
+                    <input value="Bedaie" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Last name</label>
+                    <input value="IT" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Email</label>
+                    <input value="admin@bedaie.id" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Role</label>
+                    <div class="px-3 py-2.5 text-sm rounded-md bg-ink-50 border border-ink-200">
+                      <span class="font-medium">Admin</span> <span class="text-[11px] text-ink-900/50">— full access to everything in this workspace</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-ink-100">
+                  <div class="text-[10px] tracking-widest text-ink-900/50 mb-3">SECURITY</div>
+                  <div class="space-y-3 max-w-xl">
+                    <button class="w-full px-4 py-2.5 text-sm rounded-md border border-ink-200 hover:bg-ink-100 flex items-center justify-between">
+                      <span class="flex items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> Change password</span>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-ink-900/40"></i>
+                    </button>
+                    <button class="w-full px-4 py-2.5 text-sm rounded-md border border-ink-200 hover:bg-ink-100 flex items-center justify-between">
+                      <span class="flex items-center gap-2"><i data-lucide="shield" class="w-4 h-4"></i> Two-factor authentication <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-700 ml-1">Off</span></span>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-ink-900/40"></i>
+                    </button>
+                    <button class="w-full px-4 py-2.5 text-sm rounded-md border border-ink-200 hover:bg-ink-100 flex items-center justify-between">
+                      <span class="flex items-center gap-2"><i data-lucide="monitor" class="w-4 h-4"></i> Active sessions <span class="text-[10px] px-1.5 py-0.5 rounded bg-ink-100 ml-1">2</span></span>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-ink-900/40"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                  <button class="px-4 py-2 text-sm rounded-md border border-ink-200 hover:bg-ink-100">Discard</button>
+                  <button class="px-4 py-2 text-sm font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950">Save changes</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team -->
+            <div id="st-pane-team" class="st-pane" hidden>
+              <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+                <div class="px-6 py-5 border-b border-ink-200 flex items-center justify-between">
+                  <div>
+                    <h3 class="font-display text-xl font-semibold">Team</h3>
+                    <p class="text-xs text-ink-900/50 mt-0.5">4 members · 2 pending invites</p>
+                  </div>
+                  <button class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Invite member
+                  </button>
+                </div>
+                <ul class="divide-y divide-ink-100 text-sm">
+                  <li class="px-6 py-4 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-flame-500 grid place-items-center text-[11px] font-semibold text-ink-900">BD</div>
+                    <div class="flex-1">
+                      <div class="font-medium">Bedaie IT <span class="text-[11px] text-ink-900/50 font-normal">(you)</span></div>
+                      <div class="text-[11px] text-ink-900/50">admin@bedaie.id</div>
+                    </div>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">Admin</span>
+                    <span class="text-[11px] text-emerald-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> active</span>
+                  </li>
+                  <li class="px-6 py-4 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-300 to-violet-500 grid place-items-center text-[11px] font-semibold text-white">DH</div>
+                    <div class="flex-1">
+                      <div class="font-medium">Diah Permata</div>
+                      <div class="text-[11px] text-ink-900/50">diah@bedaie.id</div>
+                    </div>
+                    <select class="text-[11px] px-2 py-0.5 rounded-md border border-ink-200 bg-white">
+                      <option>Member</option>
+                      <option>Admin</option>
+                    </select>
+                    <span class="text-[11px] text-ink-900/50">2h ago</span>
+                    <button class="text-ink-900/40 hover:text-ink-900"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+                  </li>
+                  <li class="px-6 py-4 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-500 grid place-items-center text-[11px] font-semibold text-white">AL</div>
+                    <div class="flex-1">
+                      <div class="font-medium">Ali Hakim</div>
+                      <div class="text-[11px] text-ink-900/50">ali@bedaie.id</div>
+                    </div>
+                    <select class="text-[11px] px-2 py-0.5 rounded-md border border-ink-200 bg-white">
+                      <option>Member</option>
+                      <option>Admin</option>
+                    </select>
+                    <span class="text-[11px] text-ink-900/50">yesterday</span>
+                    <button class="text-ink-900/40 hover:text-ink-900"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+                  </li>
+                  <li class="px-6 py-4 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 grid place-items-center text-[11px] font-semibold text-white">RZ</div>
+                    <div class="flex-1">
+                      <div class="font-medium">Rizki Aulia</div>
+                      <div class="text-[11px] text-ink-900/50">rizki@bedaie.id</div>
+                    </div>
+                    <select class="text-[11px] px-2 py-0.5 rounded-md border border-ink-200 bg-white">
+                      <option>Member</option>
+                      <option>Admin</option>
+                    </select>
+                    <span class="text-[11px] text-ink-900/50">3d ago</span>
+                    <button class="text-ink-900/40 hover:text-ink-900"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+                  </li>
+                  <li class="px-6 py-4 flex items-center gap-4 bg-amber-50/40">
+                    <div class="w-9 h-9 rounded-full bg-amber-100 grid place-items-center text-amber-700"><i data-lucide="mail" class="w-4 h-4"></i></div>
+                    <div class="flex-1">
+                      <div class="font-medium text-ink-900/70 italic">designer@bedaie.id</div>
+                      <div class="text-[11px] text-amber-700">Invite sent 1 day ago · expires in 6 days</div>
+                    </div>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">Pending</span>
+                    <button class="text-xs text-brand-600 hover:underline">Resend</button>
+                    <button class="text-xs text-flame-600 hover:underline">Revoke</button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Integrations -->
+            <div id="st-pane-integrations" class="st-pane" hidden>
+              <div class="space-y-4">
+                <!-- AI providers -->
+                <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+                  <div class="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 class="font-display text-xl font-semibold">AI providers</h3>
+                      <p class="text-xs text-ink-900/50 mt-0.5">Connect your own API keys. We never store them server-side in plain text.</p>
+                    </div>
+                  </div>
+
+                  <ul class="space-y-3">
+                    <li class="flex items-center gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 transition">
+                      <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center font-display text-lg">C</div>
+                      <div class="flex-1">
+                        <div class="font-medium">Anthropic Claude</div>
+                        <div class="text-[11px] text-ink-900/50">LLM for copy generation · strategy reasoning</div>
+                      </div>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Connected</span>
+                      <button class="text-xs text-ink-900/60 hover:text-ink-900">Edit</button>
+                    </li>
+                    <li class="flex items-center gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 transition">
+                      <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center font-display text-lg">G</div>
+                      <div class="flex-1">
+                        <div class="font-medium">OpenAI GPT</div>
+                        <div class="text-[11px] text-ink-900/50">LLM fallback · cost-tier routing</div>
+                      </div>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 text-ink-900/70">Not connected</span>
+                      <button class="text-xs text-brand-600 hover:underline">Connect</button>
+                    </li>
+                    <li class="flex items-center gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 transition">
+                      <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center font-display text-lg">R</div>
+                      <div class="flex-1">
+                        <div class="font-medium">Replicate</div>
+                        <div class="text-[11px] text-ink-900/50">Image gen · SDXL / Flux</div>
+                      </div>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">Connected</span>
+                      <button class="text-xs text-ink-900/60 hover:text-ink-900">Edit</button>
+                    </li>
+                    <li class="flex items-center gap-4 p-4 rounded-xl border border-ink-200 hover:border-brand-500 transition">
+                      <div class="w-10 h-10 rounded-lg bg-ink-100 grid place-items-center font-display text-lg">E</div>
+                      <div class="flex-1">
+                        <div class="font-medium">ElevenLabs <span class="text-[10px] px-1.5 py-0.5 rounded bg-flame-50 text-flame-700 ml-1">Phase 2</span></div>
+                        <div class="text-[11px] text-ink-900/50">TTS for AI Video</div>
+                      </div>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 text-ink-900/70">Not connected</span>
+                      <button disabled class="text-xs text-ink-900/30 cursor-not-allowed">Connect</button>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Social platforms (Phase 2) -->
+                <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6 opacity-70">
+                  <div class="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 class="font-display text-xl font-semibold flex items-center gap-2">Social platforms <span class="text-[10px] px-2 py-0.5 rounded-full bg-flame-50 text-flame-700 ring-1 ring-flame-200">Phase 2</span></h3>
+                      <p class="text-xs text-ink-900/50 mt-0.5">Connect accounts to auto-publish. Available when Auto Posting ships.</p>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="p-4 rounded-xl border border-ink-200 text-center">
+                      <div class="w-9 h-9 rounded-lg bg-black grid place-items-center text-white text-xs font-bold mx-auto mb-2">TT</div>
+                      <div class="text-sm font-medium">TikTok</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-ink-200 text-center">
+                      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-amber-500 grid place-items-center text-white mx-auto mb-2"><i data-lucide="instagram" class="w-4 h-4"></i></div>
+                      <div class="text-sm font-medium">Instagram</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-ink-200 text-center">
+                      <div class="w-9 h-9 rounded-lg bg-blue-600 grid place-items-center text-white mx-auto mb-2"><i data-lucide="facebook" class="w-4 h-4"></i></div>
+                      <div class="text-sm font-medium">Facebook</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-ink-200 text-center">
+                      <div class="w-9 h-9 rounded-lg bg-red-600 grid place-items-center text-white mx-auto mb-2"><i data-lucide="youtube" class="w-4 h-4"></i></div>
+                      <div class="text-sm font-medium">YT Shorts</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Usage & Billing -->
+            <div id="st-pane-usage" class="st-pane" hidden>
+              <div class="space-y-4">
+                <div class="bg-ink-900 text-white rounded-2xl p-6 relative overflow-hidden">
+                  <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-brand-500/15 blur-3xl"></div>
+                  <div class="relative">
+                    <div class="text-[10px] tracking-widest text-brand-400 font-semibold mb-2">CURRENT PLAN</div>
+                    <div class="flex items-baseline gap-3">
+                      <div class="font-display text-3xl">Trial</div>
+                      <div class="text-sm text-white/60">10 days left</div>
+                    </div>
+                    <p class="text-sm text-white/60 mt-2 max-w-md">You're on the free trial. Upgrade to keep generating after May 21, 2026.</p>
+                    <button class="mt-5 px-4 py-2 text-sm font-medium rounded-md bg-brand-500 hover:bg-brand-600 text-white flex items-center gap-2">
+                      Upgrade plan <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                  <div class="bg-white rounded-xl border border-ink-200 shadow-soft p-5">
+                    <div class="text-[10px] tracking-widest text-ink-900/50">AI SPEND · THIS MONTH</div>
+                    <div class="font-display text-3xl mt-1">RM 18.40</div>
+                    <div class="mt-3 h-1.5 bg-ink-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500" style="width:37%"></div></div>
+                    <div class="text-[11px] text-ink-900/50 mt-1.5">37% of RM 50 budget</div>
+                  </div>
+                  <div class="bg-white rounded-xl border border-ink-200 shadow-soft p-5">
+                    <div class="text-[10px] tracking-widest text-ink-900/50">POSTERS GENERATED</div>
+                    <div class="font-display text-3xl mt-1">94 <span class="text-base text-ink-900/40 font-normal">/ 200</span></div>
+                    <div class="mt-3 h-1.5 bg-ink-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500" style="width:47%"></div></div>
+                    <div class="text-[11px] text-ink-900/50 mt-1.5">47% of trial quota</div>
+                  </div>
+                  <div class="bg-white rounded-xl border border-ink-200 shadow-soft p-5">
+                    <div class="text-[10px] tracking-widest text-ink-900/50">STORAGE</div>
+                    <div class="font-display text-3xl mt-1">3.4 <span class="text-base text-ink-900/40 font-normal">/ 10 GB</span></div>
+                    <div class="mt-3 h-1.5 bg-ink-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500" style="width:34%"></div></div>
+                    <div class="text-[11px] text-ink-900/50 mt-1.5">on this VPS</div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+                  <div class="px-6 py-4 border-b border-ink-200">
+                    <h3 class="font-display text-xl font-semibold">Recent AI calls</h3>
+                  </div>
+                  <table class="w-full text-sm">
+                    <thead class="bg-ink-50/50 text-[11px] tracking-widest text-ink-900/50">
+                      <tr>
+                        <th class="text-left font-semibold px-6 py-3">Date</th>
+                        <th class="text-left font-semibold px-3 py-3">Provider</th>
+                        <th class="text-left font-semibold px-3 py-3">Job</th>
+                        <th class="text-right font-semibold px-3 py-3">Tokens / Images</th>
+                        <th class="text-right font-semibold px-6 py-3">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-100">
+                      <tr>
+                        <td class="px-6 py-3 text-ink-900/60">May 11 · 14:22</td>
+                        <td class="px-3 py-3">Claude</td>
+                        <td class="px-3 py-3">poster-copy-job · Sihaté</td>
+                        <td class="px-3 py-3 text-right font-mono">2,840 tok</td>
+                        <td class="px-6 py-3 text-right font-mono">RM 0.08</td>
+                      </tr>
+                      <tr>
+                        <td class="px-6 py-3 text-ink-900/60">May 11 · 14:22</td>
+                        <td class="px-3 py-3">Replicate</td>
+                        <td class="px-3 py-3">poster-image-job · Sihaté</td>
+                        <td class="px-3 py-3 text-right font-mono">6 img</td>
+                        <td class="px-6 py-3 text-right font-mono">RM 0.30</td>
+                      </tr>
+                      <tr>
+                        <td class="px-6 py-3 text-ink-900/60">May 11 · 09:14</td>
+                        <td class="px-3 py-3">Claude</td>
+                        <td class="px-3 py-3">poster-copy-job · Madu</td>
+                        <td class="px-3 py-3 text-right font-mono">1,920 tok</td>
+                        <td class="px-6 py-3 text-right font-mono">RM 0.05</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workspace -->
+            <div id="st-pane-workspace" class="st-pane" hidden>
+              <div class="bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+                <h3 class="font-display text-xl font-semibold mb-1">Workspace</h3>
+                <p class="text-xs text-ink-900/50 mb-6">General workspace settings.</p>
+
+                <div class="grid grid-cols-2 gap-4 max-w-xl">
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Workspace name</label>
+                    <input value="Bedaie Marketing" class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">URL slug</label>
+                    <div class="relative">
+                      <input value="bedaie" class="w-full pl-3 pr-32 py-2.5 text-sm rounded-md bg-white border border-ink-200 font-mono" />
+                      <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-900/40 font-mono">.projekinfra.com</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Timezone</label>
+                    <select class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200">
+                      <option>Asia/Kuala_Lumpur (UTC+8)</option>
+                      <option>Asia/Jakarta (UTC+7)</option>
+                      <option>Asia/Singapore (UTC+8)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-ink-900/70 mb-1.5">Currency</label>
+                    <select class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200">
+                      <option>MYR · Malaysian Ringgit</option>
+                      <option>IDR · Indonesian Rupiah</option>
+                      <option>USD · US Dollar</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-flame-100">
+                  <div class="text-[10px] tracking-widest text-flame-700 mb-3">DANGER ZONE</div>
+                  <button class="px-4 py-2 text-xs font-medium rounded-md border border-rose-300 text-rose-700 hover:bg-rose-50">Delete workspace permanently</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== VIEW: PRODUCTS EMPTY STATE ============== -->
+    <section id="view-products-empty" class="view" hidden>
+      <div class="px-8 py-20 max-w-2xl mx-auto text-center">
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-ink-100 grid place-items-center text-ink-900/40 mb-6">
+          <i data-lucide="package" class="w-10 h-10"></i>
+        </div>
+        <h2 class="font-display text-3xl font-semibold">No products yet.</h2>
+        <p class="text-ink-900/60 mt-2 max-w-md mx-auto">
+          The Product Hub is where everything starts. Add your first product so the AI knows what to write about.
+        </p>
+        <div class="mt-8 flex items-center justify-center gap-3">
+          <a href="onboarding.html" class="px-5 py-2.5 text-sm rounded-md border border-ink-200 hover:bg-ink-100 inline-flex items-center gap-2">
+            <i data-lucide="play-circle" class="w-4 h-4"></i> Take the quick tour
+          </a>
+          <button data-go="product-new" class="px-5 py-2.5 text-sm font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 inline-flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add first product
+          </button>
+        </div>
+
+        <div class="mt-12 grid grid-cols-3 gap-3 text-left">
+          <div class="bg-white rounded-xl border border-ink-200 p-4">
+            <div class="text-[10px] tracking-widest text-brand-600 font-semibold">STEP 1</div>
+            <div class="font-display text-base mt-1">Add a product</div>
+            <p class="text-[11px] text-ink-900/50 mt-1">Name, USP, brand voice — ~2 min.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-ink-200 p-4">
+            <div class="text-[10px] tracking-widest text-brand-600 font-semibold">STEP 2</div>
+            <div class="font-display text-base mt-1">Generate posters</div>
+            <p class="text-[11px] text-ink-900/50 mt-1">AI suggests + creates 6 variants.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-ink-200 p-4">
+            <div class="text-[10px] tracking-widest text-brand-600 font-semibold">STEP 3</div>
+            <div class="font-display text-base mt-1">Download & post</div>
+            <p class="text-[11px] text-ink-900/50 mt-1">Manual export in Phase 1.</p>
+          </div>
+        </div>
+
+        <button data-go="products" class="mt-10 text-[11px] text-ink-900/40 hover:text-ink-900">[ demo: view populated state → ]</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============== MODAL: ASSET UPLOAD ============== -->
+<div id="modal-asset-upload" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-ink-950/50 backdrop-blur-sm" data-close-modal></div>
+  <div class="relative h-full flex items-center justify-center p-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-ink-200 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] tracking-widest text-brand-600 font-semibold">PRODUCT · SIHATÉ OLIVE SOAP</div>
+          <h3 class="font-display text-xl font-semibold mt-0.5">Upload assets</h3>
+        </div>
+        <button data-close-modal class="w-8 h-8 grid place-items-center rounded-md hover:bg-ink-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="border-2 border-dashed border-ink-200 rounded-xl p-10 text-center hover:border-brand-500 hover:bg-brand-50/30 transition cursor-pointer">
+          <i data-lucide="upload-cloud" class="w-10 h-10 text-ink-900/30 mx-auto mb-3"></i>
+          <div class="font-medium">Drop files here or <span class="text-brand-600">browse</span></div>
+          <div class="text-[11px] text-ink-900/40 mt-1">PNG, JPG, MP4, MOV · up to 50 MB each · max 20 files</div>
+        </div>
+
+        <!-- Tag selector -->
+        <div>
+          <label class="block text-xs font-medium text-ink-900/70 mb-2">Tag (optional)</label>
+          <div class="flex flex-wrap gap-2">
+            <label class="px-3 py-1 rounded-full border-2 border-brand-500 bg-brand-50/30 text-xs cursor-pointer"><input type="checkbox" checked class="sr-only"/>Product photo</label>
+            <label class="px-3 py-1 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Logo</label>
+            <label class="px-3 py-1 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Raw video</label>
+            <label class="px-3 py-1 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Lifestyle</label>
+            <label class="px-3 py-1 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Testimonial</label>
+            <label class="px-3 py-1 rounded-full border border-ink-200 text-xs cursor-pointer hover:border-brand-500"><input type="checkbox" class="sr-only"/>Brand kit</label>
+          </div>
+        </div>
+
+        <!-- Upload queue (sample) -->
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-ink-50 border border-ink-200">
+            <i data-lucide="image" class="w-4 h-4 text-ink-900/60"></i>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium truncate">hero-front-final.jpg</div>
+              <div class="h-1 mt-1 bg-ink-200 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:100%"></div></div>
+            </div>
+            <span class="text-[10px] text-emerald-700 font-mono">2.4 MB · done</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-ink-50 border border-ink-200">
+            <i data-lucide="video" class="w-4 h-4 text-ink-900/60"></i>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium truncate">unboxing-cut2.mp4</div>
+              <div class="h-1 mt-1 bg-ink-200 rounded-full overflow-hidden"><div class="h-full bg-brand-500" style="width:48%"></div></div>
+            </div>
+            <span class="text-[10px] text-ink-900/60 font-mono">18 MB · 48%</span>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-ink-200 flex items-center justify-between bg-ink-50/50">
+        <div class="text-[11px] text-ink-900/50">2 of 2 uploading · ~12s left</div>
+        <div class="flex gap-2">
+          <button data-close-modal class="px-3 py-2 text-xs rounded-md border border-ink-200 hover:bg-white">Cancel</button>
+          <button data-close-modal class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> Save to library
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: EXPORT ============== -->
+<div id="modal-export" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-ink-950/50 backdrop-blur-sm" data-close-modal></div>
+  <div class="relative h-full flex items-center justify-center p-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-ink-200 flex items-center justify-between">
+        <h3 class="font-display text-xl font-semibold">Download posters</h3>
+        <button data-close-modal class="w-8 h-8 grid place-items-center rounded-md hover:bg-ink-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label class="block text-xs font-medium text-ink-900/70 mb-2">Format</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="px-3 py-2 rounded-md border-2 border-brand-500 bg-brand-50/30 text-xs text-center cursor-pointer"><input type="radio" name="fmt" checked class="sr-only"/>PNG</label>
+            <label class="px-3 py-2 rounded-md border border-ink-200 text-xs text-center cursor-pointer hover:border-brand-500"><input type="radio" name="fmt" class="sr-only"/>JPG</label>
+            <label class="px-3 py-2 rounded-md border border-ink-200 text-xs text-center cursor-pointer hover:border-brand-500"><input type="radio" name="fmt" class="sr-only"/>PDF</label>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ink-900/70 mb-2">Quality</label>
+          <select class="w-full px-3 py-2.5 text-sm rounded-md bg-white border border-ink-200">
+            <option>High (recommended for ads)</option>
+            <option>Standard (faster, smaller files)</option>
+            <option>Web-optimized</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ink-900/70 mb-2">Bundle</label>
+          <label class="flex items-center gap-2 p-3 rounded-lg border-2 border-brand-500 bg-brand-50/30 cursor-pointer">
+            <input type="radio" name="bnd" checked class="accent-brand-500"/>
+            <div>
+              <div class="text-sm font-medium">All 6 posters as ZIP</div>
+              <div class="text-[11px] text-ink-900/60">~12 MB · sihate-posters-may11.zip</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-2 mt-2 p-3 rounded-lg border border-ink-200 cursor-pointer hover:border-brand-500">
+            <input type="radio" name="bnd" class="accent-brand-500"/>
+            <div>
+              <div class="text-sm font-medium">Individual files</div>
+              <div class="text-[11px] text-ink-900/60">Download each one separately</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-ink-200 flex items-center justify-end gap-2 bg-ink-50/50">
+        <button data-close-modal class="px-3 py-2 text-xs rounded-md border border-ink-200 hover:bg-white">Cancel</button>
+        <button data-close-modal class="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 flex items-center gap-2">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Download ZIP
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // init icons
+  lucide.createIcons();
+
+  // ===== view registry =====
+  const viewIds = [
+    'dashboard',
+    'products', 'products-empty',
+    'product-detail', 'product-new',
+    'studio-start', 'studio', 'studio-generating', 'studio-results',
+    'posting',
+    'ads',
+    'settings',
+  ];
+  const views = {};
+  viewIds.forEach(id => { views[id] = document.getElementById('view-' + id); });
+
+  const titles = {
+    dashboard: 'Dashboard',
+    products: 'Product Hub',
+    'products-empty': 'Product Hub',
+    'product-detail': 'Product · Sihaté Olive Soap',
+    'product-new': 'New Product',
+    'studio-start': 'AI Content Studio',
+    studio: 'AI Content Studio',
+    'studio-generating': 'AI Content Studio · Generating',
+    'studio-results': 'AI Content Studio · Results',
+    posting: 'Auto Posting',
+    ads: 'Ads Integration',
+    settings: 'Settings',
+  };
+
+  // map view → which sidebar nav item to highlight
+  const navMap = {
+    dashboard: 'dashboard',
+    products: 'products',
+    'products-empty': 'products',
+    'product-detail': 'products',
+    'product-new': 'products',
+    'studio-start': 'studio',
+    studio: 'studio',
+    'studio-generating': 'studio',
+    'studio-results': 'studio',
+    posting: 'posting',
+    ads: 'ads',
+    settings: 'settings',
+  };
+
+  const crumb = document.getElementById('crumb');
+  const navItems = document.querySelectorAll('.nav-item[data-view]');
+
+  function showView(name) {
+    if (!views[name]) name = 'dashboard';
+    Object.entries(views).forEach(([k, el]) => { if (el) el.hidden = (k !== name); });
+    const active = navMap[name];
+    navItems.forEach(b => b.classList.toggle('active', b.dataset.view === active));
+    if (titles[name]) crumb.textContent = titles[name];
+    window.scrollTo({top:0, behavior:'instant'});
+    location.hash = name;
+  }
+
+  // sidebar clicks
+  navItems.forEach(b => b.addEventListener('click', () => {
+    showView(b.dataset.view);
+    // settings sub-tab via sidebar
+    const tab = b.dataset.settingsTab;
+    if (b.dataset.view === 'settings' && tab) showSettingsTab(tab);
+  }));
+
+  // in-page "data-go" navigation
+  document.addEventListener('click', (e) => {
+    const goBtn = e.target.closest('[data-go]');
+    if (!goBtn) return;
+    const target = goBtn.dataset.go;
+    if (target === 'asset-upload') return openModal('modal-asset-upload');
+    if (target === 'export-modal') return openModal('modal-export');
+    showView(target);
+  });
+
+  // ===== Product Detail tabs =====
+  function showPdTab(name) {
+    document.querySelectorAll('.pd-pane').forEach(el => el.hidden = !el.id.endsWith('-' + name));
+    document.querySelectorAll('.pd-tab').forEach(b => {
+      const on = b.dataset.pdTab === name;
+      b.classList.toggle('pd-active', on);
+      b.classList.toggle('bg-ink-50', on);
+      b.classList.toggle('text-ink-900', on);
+      b.classList.toggle('font-medium', on);
+      b.classList.toggle('text-white/60', !on);
+    });
+  }
+  document.querySelectorAll('.pd-tab').forEach(b => b.addEventListener('click', () => showPdTab(b.dataset.pdTab)));
+
+  // ===== Settings tabs =====
+  function showSettingsTab(name) {
+    document.querySelectorAll('.st-pane').forEach(el => el.hidden = !el.id.endsWith('-' + name));
+    document.querySelectorAll('.st-tab').forEach(b => {
+      const on = b.dataset.stTab === name;
+      b.classList.toggle('st-active', on);
+      b.classList.toggle('bg-ink-900', on);
+      b.classList.toggle('text-white', on);
+      b.classList.toggle('hover:bg-ink-100', !on);
+    });
+  }
+  document.querySelectorAll('.st-tab').forEach(b => b.addEventListener('click', () => showSettingsTab(b.dataset.stTab)));
+
+  // ===== Modals =====
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function closeModals() { document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden')); }
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-close-modal]')) closeModals(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModals(); });
+
+  // ===== restore from hash =====
+  const initial = location.hash.replace('#','');
+  if (initial) showView(initial);
+</script>
+
+<style>
+  .st-tab.st-active { background: #0B1220; color: #fff; }
+  .st-tab.st-active i { color: #22D3EE; }
+</style>
+</body>
+</html>
