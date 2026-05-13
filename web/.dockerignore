@@ -1,0 +1,34 @@
+# Don't COPY these into the image
+node_modules/
+vendor/
+.git/
+.github/
+.idea/
+.vscode/
+.env
+.env.local
+.env.production
+.env.testing
+.phpunit.result.cache
+storage/logs/*
+!storage/logs/.gitkeep
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/public/products/*
+bootstrap/cache/*.php
+public/build/
+public/storage
+public/hot
+tests/
+
+# Docker meta itself
+Dockerfile*
+docker-compose*.yml
+docker/
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
