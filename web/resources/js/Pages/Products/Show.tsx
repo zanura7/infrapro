@@ -1,0 +1,395 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, History, Image as ImageIcon, Sparkles, Upload, Video } from 'lucide-react';
+import { useRef, useState } from 'react';
+
+type Asset = {
+    id: number;
+    type: 'image' | 'video' | 'logo' | 'brand_kit' | 'document';
+    url: string;
+    thumbnail_url: string | null;
+    mime: string;
+    size: number;
+    tag: string | null;
+    created_at: string;
+};
+
+type Version = {
+    id: number;
+    version: number;
+    change_summary: string | null;
+    created_at: string;
+    user?: { id: number; name: string };
+};
+
+type Job = {
+    id: number;
+    kind: string;
+    status: string;
+    output: { url?: string } | null;
+    created_at: string;
+};
+
+type Product = {
+    id: number;
+    slug: string;
+    name: string;
+    sku: string | null;
+    category: string | null;
+    price: string | null;
+    currency: string;
+    description: string | null;
+    usp: string[] | null;
+    target_audience: string | null;
+    pain_point: string | null;
+    brand_voice: any;
+    current_version: number;
+    assets: Asset[];
+    versions: Version[];
+    content_jobs: Job[];
+};
+
+type Props = { product: Product };
+
+export default function ProductShow({ product }: Props) {
+    const [tab, setTab] = useState<'master' | 'assets' | 'voice' | 'versions' | 'content'>('master');
+    const fileRef = useRef<HTMLInputElement>(null);
+    const upload = useForm<{ files: File[]; tag: string }>({ files: [], tag: '' });
+
+    const onFiles = (files: FileList | null) => {
+        if (!files) return;
+        upload.transform((data) => ({ ...data, files: Array.from(files) }));
+        upload.post(route('product-assets.store', product.slug), {
+            forceFormData: true,
+            onSuccess: () => upload.reset(),
+        });
+    };
+
+    return (
+        <AuthenticatedLayout header={product.name} activeKey="products">
+            <Head title={product.name} />
+
+            {/* Hero strip */}
+            <div className="bg-ink-950 text-white px-8 py-6 relative overflow-hidden">
+                <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-brand-500/15 blur-3xl" />
+                <div className="relative flex items-end justify-between">
+                    <div>
+                        <Link
+                            href={route('products.index')}
+                            className="text-[11px] text-white/40 hover:text-white inline-flex items-center gap-1 mb-3"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" /> Back to Product Hub
+                        </Link>
+                        <div className="text-[11px] tracking-widest text-brand-400">PRODUCT</div>
+                        <h1 className="font-display text-3xl font-semibold">{product.name}</h1>
+                        <div className="text-xs text-white/50 mt-1">
+                            {product.category || 'Uncategorised'}
+                            {product.price && ` · ${product.currency} ${product.price}`}
+                            {' · '}{product.assets.length} assets · {product.content_jobs.length} jobs
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <span className="px-3 py-2 text-xs font-medium rounded-md bg-white/10 ring-1 ring-white/10 inline-flex items-center gap-2">
+                            <History className="w-3.5 h-3.5" /> v{product.current_version}
+                        </span>
+                        <Link
+                            href={route('studio.index')}
+                            className="px-3 py-2 text-xs font-medium rounded-md bg-brand-500 hover:bg-brand-600 text-white inline-flex items-center gap-2"
+                        >
+                            <Sparkles className="w-3.5 h-3.5" /> Generate content
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="relative flex gap-1 mt-8 -mb-6 text-sm">
+                    {(['master', 'assets', 'voice', 'versions', 'content'] as const).map((t) => {
+                        const labels: Record<typeof t, string> = {
+                            master: 'Master Info',
+                            assets: 'Asset Library',
+                            voice: 'Brand Voice',
+                            versions: 'Versions',
+                            content: 'Linked Content',
+                        };
+                        const counts: Record<typeof t, number | undefined> = {
+                            master: undefined,
+                            assets: product.assets.length,
+                            voice: undefined,
+                            versions: product.versions.length,
+                            content: product.content_jobs.length,
+                        };
+                        const active = tab === t;
+                        return (
+                            <button
+                                key={t}
+                                onClick={() => setTab(t)}
+                                className={`px-4 py-2.5 rounded-t-lg ${
+                                    active
+                                        ? 'bg-ink-50 text-ink-900 font-medium'
+                                        : 'text-white/60 hover:text-white'
+                                }`}
+                            >
+                                {labels[t]}
+                                {counts[t] !== undefined && (
+                                    <span className={`ml-1.5 text-[10px] font-mono ${active ? 'text-ink-900/40' : 'text-white/40'}`}>
+                                        {counts[t]}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="px-8 py-8">
+                {tab === 'master' && <MasterPane product={product} />}
+                {tab === 'assets' && (
+                    <AssetsPane
+                        product={product}
+                        onUploadClick={() => fileRef.current?.click()}
+                        uploading={upload.processing}
+                    />
+                )}
+                {tab === 'voice' && <VoicePane product={product} />}
+                {tab === 'versions' && <VersionsPane versions={product.versions} />}
+                {tab === 'content' && <ContentPane jobs={product.content_jobs} />}
+
+                <input
+                    ref={fileRef}
+                    type="file"
+                    multiple
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={(e) => onFiles(e.target.files)}
+                />
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+function MasterPane({ product }: { product: Product }) {
+    return (
+        <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-8 bg-white rounded-2xl border border-ink-200 shadow-soft p-6">
+                <h3 className="font-display text-xl font-semibold mb-5">Product master</h3>
+                <dl className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+                    <Field label="NAME">{product.name}</Field>
+                    <Field label="SKU">{product.sku || '—'}</Field>
+                    <Field label="CATEGORY">{product.category || '—'}</Field>
+                    <Field label="PRICE">{product.price ? `${product.currency} ${product.price}` : '—'}</Field>
+                    {product.description && (
+                        <div className="col-span-2">
+                            <dt className="text-[10px] tracking-widest text-brand-600 mb-1">DESCRIPTION</dt>
+                            <dd className="text-ink-900/80 leading-relaxed">{product.description}</dd>
+                        </div>
+                    )}
+                    {product.usp && product.usp.length > 0 && (
+                        <div className="col-span-2">
+                            <dt className="text-[10px] tracking-widest text-brand-600 mb-1">USP</dt>
+                            <dd className="flex flex-wrap gap-1.5">
+                                {product.usp.map((u) => (
+                                    <span key={u} className="px-2 py-0.5 text-xs rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                                        {u}
+                                    </span>
+                                ))}
+                            </dd>
+                        </div>
+                    )}
+                    {product.target_audience && (
+                        <div className="col-span-2">
+                            <dt className="text-[10px] tracking-widest text-brand-600 mb-1">TARGET AUDIENCE</dt>
+                            <dd>{product.target_audience}</dd>
+                        </div>
+                    )}
+                    {product.pain_point && (
+                        <div className="col-span-2">
+                            <dt className="text-[10px] tracking-widest text-brand-600 mb-1">PAIN POINT</dt>
+                            <dd>{product.pain_point}</dd>
+                        </div>
+                    )}
+                </dl>
+            </div>
+        </div>
+    );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div>
+            <dt className="text-[10px] tracking-widest text-brand-600 mb-1">{label}</dt>
+            <dd>{children}</dd>
+        </div>
+    );
+}
+
+function AssetsPane({
+    product, onUploadClick, uploading,
+}: { product: Product; onUploadClick: () => void; uploading: boolean }) {
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-5">
+                <div>
+                    <h3 className="font-display text-xl font-semibold">Asset library</h3>
+                    <p className="text-xs text-ink-900/50">{product.assets.length} files</p>
+                </div>
+                <button
+                    onClick={onUploadClick}
+                    disabled={uploading}
+                    className="px-3 py-2 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950 inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                    <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading…' : 'Upload'}
+                </button>
+            </div>
+
+            {product.assets.length === 0 ? (
+                <div className="bg-white rounded-xl border-2 border-dashed border-ink-200 p-12 text-center">
+                    <Upload className="w-10 h-10 text-ink-900/30 mx-auto mb-3" />
+                    <p className="text-sm text-ink-900/70">No assets yet</p>
+                    <p className="text-[11px] text-ink-900/40 mt-1">Upload images or videos to use as reference for AI</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {product.assets.map((a) => (
+                        <div key={a.id} className="aspect-square rounded-lg overflow-hidden border border-ink-200 bg-ink-100 relative group">
+                            {a.type === 'image' ? (
+                                <img src={a.thumbnail_url || a.url} alt="" className="w-full h-full object-cover" />
+                            ) : a.type === 'video' ? (
+                                <div className="w-full h-full grid place-items-center text-ink-900/60">
+                                    <Video className="w-8 h-8" />
+                                </div>
+                            ) : (
+                                <div className="w-full h-full grid place-items-center text-ink-900/60">
+                                    <ImageIcon className="w-8 h-8" />
+                                </div>
+                            )}
+                            <button
+                                onClick={() => {
+                                    if (confirm('Delete this asset?')) {
+                                        router.delete(route('product-assets.destroy', [product.slug, a.id]));
+                                    }
+                                }}
+                                className="absolute top-1 right-1 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white opacity-0 group-hover:opacity-100 transition"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function VoicePane({ product }: { product: Product }) {
+    const v = product.brand_voice;
+    if (!v) {
+        return (
+            <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center text-ink-900/50">
+                No brand voice configured yet.
+            </div>
+        );
+    }
+    return (
+        <div className="bg-white rounded-2xl border border-ink-200 shadow-soft p-6 max-w-3xl">
+            <h3 className="font-display text-xl font-semibold mb-5">Brand voice</h3>
+
+            {v.tone && v.tone.length > 0 && (
+                <div className="mb-5">
+                    <div className="text-[10px] tracking-widest text-brand-600 mb-2">TONE</div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {v.tone.map((t: string) => (
+                            <span key={t} className="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 text-xs">
+                                {t}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {v.dos && v.dos.length > 0 && (
+                <div className="mb-5">
+                    <div className="text-[10px] tracking-widest text-brand-600 mb-2">DO'S</div>
+                    <ul className="text-sm space-y-1.5">
+                        {v.dos.map((d: string) => <li key={d}>· {d}</li>)}
+                    </ul>
+                </div>
+            )}
+
+            {v.donts && v.donts.length > 0 && (
+                <div className="mb-5">
+                    <div className="text-[10px] tracking-widest text-flame-600 mb-2">DON'TS</div>
+                    <ul className="text-sm space-y-1.5">
+                        {v.donts.map((d: string) => <li key={d}>· {d}</li>)}
+                    </ul>
+                </div>
+            )}
+
+            {v.samples && v.samples.length > 0 && (
+                <div>
+                    <div className="text-[10px] tracking-widest text-brand-600 mb-2">SAMPLE COPY</div>
+                    {v.samples.map((s: string, i: number) => (
+                        <blockquote key={i} className="font-serif italic text-base text-ink-900/80 border-l-2 border-brand-500 pl-4 leading-relaxed mb-3">
+                            {s}
+                        </blockquote>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function VersionsPane({ versions }: { versions: Version[] }) {
+    return (
+        <div className="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+            <ul className="divide-y divide-ink-100">
+                {versions.map((v, idx) => (
+                    <li key={v.id} className="px-6 py-4 flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-xs font-mono">
+                            v{v.version}
+                        </div>
+                        <div className="flex-1">
+                            <div className="text-sm font-medium">{v.change_summary || 'No description'}</div>
+                            <div className="text-[11px] text-ink-900/50">
+                                by {v.user?.name || 'system'} · {new Date(v.created_at).toLocaleString()}
+                            </div>
+                        </div>
+                        {idx === 0 && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                Current
+                            </span>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+function ContentPane({ jobs }: { jobs: Job[] }) {
+    if (jobs.length === 0) {
+        return (
+            <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center text-ink-900/50">
+                No content generated for this product yet.
+            </div>
+        );
+    }
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {jobs.map((j) => (
+                <div key={j.id} className="bg-white rounded-xl border border-ink-200 overflow-hidden">
+                    {j.output?.url && j.kind === 'poster' && (
+                        <img src={j.output.url} alt="" className="w-full aspect-[4/5] object-cover" />
+                    )}
+                    {j.output?.url && j.kind === 'video' && (
+                        <video src={j.output.url} controls className="w-full aspect-[4/5] object-cover" />
+                    )}
+                    <div className="p-3">
+                        <div className="text-sm font-medium capitalize">{j.kind}</div>
+                        <div className="text-[11px] text-ink-900/50">
+                            {j.status} · {new Date(j.created_at).toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}

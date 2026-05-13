@@ -46,3 +46,20 @@ public/storage
 .local/
 tmp/
 temp/
+
+# Laravel app inside web/
+web/node_modules/
+web/vendor/
+web/.env
+web/.env.backup
+web/.env.production
+web/storage/logs/*
+!web/storage/logs/.gitkeep
+web/storage/framework/cache/data/
+web/storage/framework/sessions/
+web/storage/framework/views/
+web/storage/app/public/products/
+web/bootstrap/cache/*.php
+web/public/build/
+web/public/storage
+web/public/hot
