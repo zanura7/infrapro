@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/studio/analyze', [AiStudioController::class, 'analyze'])->name('studio.analyze');
     Route::post('/studio/generate-image', [AiStudioController::class, 'generateImage'])->name('studio.image');
     Route::post('/studio/generate-video', [AiStudioController::class, 'generateVideo'])->name('studio.video');
+    Route::post('/studio/stitch', [AiStudioController::class, 'stitch'])->name('studio.stitch');
+    Route::get('/studio/jobs/{id}', [AiStudioController::class, 'jobStatus'])->name('studio.job');
 });
 
 Route::middleware('auth')->group(function () {

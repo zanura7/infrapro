@@ -2,11 +2,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import {
-    ArrowRight, Brain, Check, Download, Film,
+    ArrowRight, Brain, Check, Combine, Download, Film,
     Image as ImageIcon, Loader2, Megaphone, Package, RefreshCw, RotateCcw,
-    Sparkles, Target, Upload, Video, X,
+    Sparkles, Target, Upload, Video, X, Zap,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
@@ -47,16 +47,40 @@ type Strategy = {
     hook: string;
     cta: string;
     scenes: Scene[];
-    meta?: { aspect_ratio: string; clip_seconds: number; scene_count: number; template_slug: string | null };
+    meta?: { aspect_ratio: string; clip_seconds: number; scene_count: number; template_slug: string | null; skip_analyze?: boolean };
 };
 
 type SceneState = {
     image_url?: string;
-    video_url?: string;
+    image_job_id?: number;
     image_loading?: boolean;
+    video_url?: string;
+    video_job_id?: number;
     video_loading?: boolean;
     error?: string;
 };
+
+type StitchState = {
+    job_id?: number;
+    url?: string;
+    loading?: boolean;
+    error?: string;
+};
+
+const POLL_INTERVAL_MS = 3000;
+
+async function pollJob(jobId: number): Promise<{ status: string; output: any; error: any }> {
+    const { data } = await axios.get(route('studio.job', { id: jobId }));
+    return data;
+}
+
+async function waitForJob(jobId: number): Promise<{ status: string; output: any; error: any }> {
+    while (true) {
+        const r = await pollJob(jobId);
+        if (r.status === 'succeeded' || r.status === 'failed') return r;
+        await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
+    }
+}
 
 export default function StudioIndex({ products, templates }: { products: Product[]; templates: Template[] }) {
     const [productId, setProductId] = useState<number | null>(products[0]?.id ?? null);
@@ -65,11 +89,14 @@ export default function StudioIndex({ products, templates }: { products: Product
     const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
     const [templateSlug, setTemplateSlug] = useState<string | null>(templates[0]?.slug ?? null);
     const [language, setLanguage] = useState<'indonesian' | 'malay' | 'english'>('indonesian');
+    const [skipAnalyze, setSkipAnalyze] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [strategy, setStrategy] = useState<Strategy | null>(null);
     const [sceneStates, setSceneStates] = useState<Record<number, SceneState>>({});
+    const [stitchState, setStitchState] = useState<StitchState>({});
     const [error, setError] = useState<string | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
+    const cancelledRef = useRef(false);
 
     const selectedProduct = useMemo(
         () => products.find((p) => p.id === productId) || null,
@@ -83,9 +110,14 @@ export default function StudioIndex({ products, templates }: { products: Product
     const aspectRatio = strategy?.meta?.aspect_ratio || selectedTemplate?.default_aspect_ratio || '9:16';
     const clipSeconds = strategy?.meta?.clip_seconds || selectedTemplate?.default_clip_seconds || 6;
 
+    useEffect(() => {
+        return () => { cancelledRef.current = true; };
+    }, []);
+
     const reset = () => {
         setStrategy(null);
         setSceneStates({});
+        setStitchState({});
         setError(null);
     };
 
@@ -110,17 +142,19 @@ export default function StudioIndex({ products, templates }: { products: Product
 
     const analyze = async () => {
         if (!productId) { setError('Select a product first.'); return; }
-        if (!assetId && !uploadedFile && !selectedProduct?.assets.length) {
+        if (!skipAnalyze && !assetId && !uploadedFile && !selectedProduct?.assets.length) {
             setError('Upload an image or pick a product asset.'); return;
         }
         setError(null);
         setAnalyzing(true);
         setStrategy(null);
         setSceneStates({});
+        setStitchState({});
         try {
             const fd = buildImagePayload();
             fd.append('language', language);
             if (templateSlug) fd.append('template_slug', templateSlug);
+            if (skipAnalyze) fd.append('skip_analyze', '1');
             const { data } = await axios.post(route('studio.analyze'), fd);
             setStrategy(data.strategy);
         } catch (e: any) {
@@ -139,11 +173,22 @@ export default function StudioIndex({ products, templates }: { products: Product
             fd.append('prompt', scene.image_prompt);
             fd.append('aspect_ratio', aspectRatio);
             const { data } = await axios.post(route('studio.image'), fd);
-            updateScene(scene.index, { image_url: data.image_url, image_loading: false });
+            updateScene(scene.index, { image_job_id: data.job_id });
+
+            const result = await waitForJob(data.job_id);
+            if (cancelledRef.current) return;
+            if (result.status === 'succeeded') {
+                updateScene(scene.index, { image_url: result.output?.url, image_loading: false });
+            } else {
+                updateScene(scene.index, {
+                    image_loading: false,
+                    error: result.error?.message || 'Image generation failed.',
+                });
+            }
         } catch (e: any) {
             updateScene(scene.index, {
                 image_loading: false,
-                error: e?.response?.data?.error || e?.message || 'Image gen failed.',
+                error: e?.response?.data?.error || e?.message || 'Image dispatch failed.',
             });
         }
     };
@@ -162,21 +207,64 @@ export default function StudioIndex({ products, templates }: { products: Product
                 aspect_ratio: aspectRatio,
                 clip_seconds: clipSeconds,
             });
-            updateScene(scene.index, { video_url: data.video_url, video_loading: false });
+            updateScene(scene.index, { video_job_id: data.job_id });
+
+            const result = await waitForJob(data.job_id);
+            if (cancelledRef.current) return;
+            if (result.status === 'succeeded') {
+                updateScene(scene.index, { video_url: result.output?.url, video_loading: false });
+            } else {
+                updateScene(scene.index, {
+                    video_loading: false,
+                    error: result.error?.message || 'Video generation failed.',
+                });
+            }
         } catch (e: any) {
             updateScene(scene.index, {
                 video_loading: false,
-                error: e?.response?.data?.error || e?.message || 'Video gen failed.',
+                error: e?.response?.data?.error || e?.message || 'Video dispatch failed.',
             });
         }
     };
+
+    const stitchAll = async () => {
+        if (!strategy || !productId) return;
+        const clipUrls = strategy.scenes
+            .map((s) => sceneStates[s.index]?.video_url)
+            .filter((u): u is string => !!u);
+        if (clipUrls.length < 2) {
+            setStitchState({ error: 'Need at least 2 finished clips to stitch.' });
+            return;
+        }
+        setStitchState({ loading: true, error: undefined, url: undefined });
+        try {
+            const { data } = await axios.post(route('studio.stitch'), {
+                product_id: productId,
+                clip_urls: clipUrls,
+            });
+            setStitchState({ job_id: data.job_id, loading: true });
+            const result = await waitForJob(data.job_id);
+            if (cancelledRef.current) return;
+            if (result.status === 'succeeded') {
+                setStitchState({ url: result.output?.url, loading: false });
+            } else {
+                setStitchState({ loading: false, error: result.error?.message || 'Stitch failed.' });
+            }
+        } catch (e: any) {
+            setStitchState({ loading: false, error: e?.response?.data?.error || e?.message || 'Stitch dispatch failed.' });
+        }
+    };
+
+    const finishedClips = useMemo(() => {
+        if (!strategy) return 0;
+        return strategy.scenes.filter((s) => sceneStates[s.index]?.video_url).length;
+    }, [strategy, sceneStates]);
 
     return (
         <AuthenticatedLayout header="AI Content Studio" activeKey="studio">
             <Head title="AI Content Studio" />
 
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                {/* Header */}
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <div className="mb-2 text-[11px] font-semibold tracking-[0.2em] text-accent">
@@ -184,7 +272,7 @@ export default function StudioIndex({ products, templates }: { products: Product
                         </div>
                         <h1 className="font-display text-3xl font-semibold sm:text-4xl">AI Content Studio</h1>
                         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                            Pick a product, pick a template, get a 5-scene video ad. Each clip is image-to-video, voiceover lip-synced.
+                            Pick a product, pick a template, get a 5-scene video ad. Per-scene image + 6s clip with lip-synced voiceover. Stitch when ready.
                         </p>
                     </div>
                     {strategy && (
@@ -335,34 +423,53 @@ export default function StudioIndex({ products, templates }: { products: Product
                             <Card>
                                 <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-3">
                                     <Target className="h-4 w-4 text-accent" />
-                                    <CardTitle className="text-sm">Language</CardTitle>
+                                    <CardTitle className="text-sm">Options</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-3 gap-1.5">
-                                        {([
-                                            { id: 'indonesian', label: '🇮🇩 ID' },
-                                            { id: 'malay', label: '🇲🇾 MY' },
-                                            { id: 'english', label: '🇬🇧 EN' },
-                                        ] as const).map((l) => (
-                                            <Button
-                                                key={l.id}
-                                                type="button"
-                                                onClick={() => setLanguage(l.id)}
-                                                size="sm"
-                                                variant={language === l.id ? 'default' : 'outline'}
-                                            >
-                                                {l.label}
-                                            </Button>
-                                        ))}
+                                <CardContent className="space-y-3">
+                                    <div>
+                                        <Label className="mb-2 block text-[11px] text-muted-foreground">Voiceover language</Label>
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            {([
+                                                { id: 'indonesian', label: '🇮🇩 ID' },
+                                                { id: 'malay', label: '🇲🇾 MY' },
+                                                { id: 'english', label: '🇬🇧 EN' },
+                                            ] as const).map((l) => (
+                                                <Button
+                                                    key={l.id}
+                                                    type="button"
+                                                    onClick={() => setLanguage(l.id)}
+                                                    size="sm"
+                                                    variant={language === l.id ? 'default' : 'outline'}
+                                                >
+                                                    {l.label}
+                                                </Button>
+                                            ))}
+                                        </div>
                                     </div>
+                                    <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-xs hover:bg-muted/40">
+                                        <input
+                                            type="checkbox"
+                                            checked={skipAnalyze}
+                                            onChange={(e) => setSkipAnalyze(e.target.checked)}
+                                            className="mt-0.5 h-3.5 w-3.5 rounded border-border text-primary focus:ring-ring"
+                                        />
+                                        <span className="flex-1">
+                                            <span className="font-medium">Skip vision analyze</span>
+                                            <span className="block text-[11px] text-muted-foreground">
+                                                Use template defaults directly. Faster, free, but less product-tailored.
+                                            </span>
+                                        </span>
+                                    </label>
                                 </CardContent>
                             </Card>
 
                             <Button onClick={analyze} disabled={analyzing} size="lg" className="w-full">
                                 {analyzing ? (
-                                    <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing…</>
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Building scenes…</>
                                 ) : strategy ? (
-                                    <><RefreshCw className="h-4 w-4" /> Re-analyze</>
+                                    <><RefreshCw className="h-4 w-4" /> Rebuild scenes</>
+                                ) : skipAnalyze ? (
+                                    <><Zap className="h-4 w-4" /> Build scenes from template</>
                                 ) : (
                                     <><Brain className="h-4 w-4" /> Analyze &amp; build scenes</>
                                 )}
@@ -374,8 +481,11 @@ export default function StudioIndex({ products, templates }: { products: Product
                             {!strategy && !analyzing && <PickHint />}
                             {analyzing && (
                                 <LoadingCard
-                                    title="Analyzing image &amp; building 5 scenes…"
-                                    subtitle="Vision LLM identifies the product and drafts your scene breakdown."
+                                    title={skipAnalyze ? 'Building scenes from template…' : 'Analyzing image & building 5 scenes…'}
+                                    subtitle={skipAnalyze
+                                        ? 'No LLM call — using the template narrative directly.'
+                                        : 'Vision LLM identifies the product and drafts your scene breakdown.'
+                                    }
                                 />
                             )}
 
@@ -389,6 +499,13 @@ export default function StudioIndex({ products, templates }: { products: Product
                                         onGenerateImage={generateSceneImage}
                                         onGenerateVideo={generateSceneVideo}
                                     />
+                                    <StitchCard
+                                        totalScenes={strategy.scenes.length}
+                                        finishedClips={finishedClips}
+                                        state={stitchState}
+                                        aspectRatio={aspectRatio}
+                                        onStitch={stitchAll}
+                                    />
                                 </>
                             )}
                         </main>
@@ -398,10 +515,6 @@ export default function StudioIndex({ products, templates }: { products: Product
         </AuthenticatedLayout>
     );
 }
-
-// ============================================================
-// Sub-components
-// ============================================================
 
 function PickHint() {
     return (
@@ -426,7 +539,7 @@ function LoadingCard({ title, subtitle }: { title: string; subtitle: string }) {
                 <Loader2 className="h-6 w-6 animate-spin text-accent" />
             </div>
             <div className="flex-1">
-                <div className="font-semibold" dangerouslySetInnerHTML={{ __html: title }} />
+                <div className="font-semibold">{title}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>
             </div>
         </Card>
@@ -441,9 +554,12 @@ function StrategySummary({ strategy }: { strategy: Strategy }) {
                     <Brain className="h-4 w-4 text-accent" />
                     <CardTitle className="text-sm">Strategy</CardTitle>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {strategy.meta?.template_slug && (
                         <Badge variant="accent" className="capitalize">{strategy.meta.template_slug.replace(/-/g, ' ')}</Badge>
+                    )}
+                    {strategy.meta?.skip_analyze && (
+                        <Badge variant="muted">template-only</Badge>
                     )}
                     <Badge variant="muted" className="font-mono">{strategy.meta?.aspect_ratio || '9:16'}</Badge>
                     <Badge variant="muted">{strategy.meta?.clip_seconds || 6}s / scene</Badge>
@@ -502,9 +618,7 @@ function ScenesGrid({
                     <Film className="h-4 w-4 text-accent" />
                     <CardTitle className="text-sm">Scenes ({scenes.length})</CardTitle>
                 </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Generate per scene
-                </span>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Generate per scene · async</span>
             </CardHeader>
             <Separator />
             <CardContent className="space-y-4 pt-6">
@@ -538,12 +652,12 @@ function SceneRow({
     return (
         <div className="rounded-xl border bg-muted/30 p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[200px_1fr]">
-                {/* Media column */}
                 <div className="space-y-2">
                     <MediaSlot
                         kind={hasVideo ? 'video' : 'image'}
                         url={hasVideo ? state.video_url : state.image_url}
                         loading={state.image_loading || state.video_loading}
+                        loadingLabel={state.video_loading ? 'Rendering video…' : state.image_loading ? 'Rendering image…' : undefined}
                         aspectRatio={aspectRatio}
                     />
                     <div className="flex flex-wrap gap-2">
@@ -587,7 +701,6 @@ function SceneRow({
                     )}
                 </div>
 
-                {/* Info column */}
                 <div className="space-y-3">
                     <div className="flex items-center gap-2">
                         <Badge variant="muted" className="font-mono">#{scene.index}</Badge>
@@ -628,15 +741,20 @@ function SceneRow({
 }
 
 function MediaSlot({
-    kind, url, loading, aspectRatio,
-}: { kind: 'image' | 'video'; url?: string; loading?: boolean; aspectRatio: string }) {
+    kind, url, loading, loadingLabel, aspectRatio,
+}: { kind: 'image' | 'video'; url?: string; loading?: boolean; loadingLabel?: string; aspectRatio: string }) {
     return (
         <div
             className="grid w-full place-items-center overflow-hidden rounded-lg border bg-muted"
             style={{ aspectRatio: aspectRatio.replace(':', '/') }}
         >
             {loading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                    {loadingLabel && (
+                        <div className="mt-1 text-[10px] text-muted-foreground">{loadingLabel}</div>
+                    )}
+                </div>
             ) : url ? (
                 kind === 'video' ? (
                     <video src={url} controls playsInline className="h-full w-full object-cover" />
@@ -650,6 +768,87 @@ function MediaSlot({
                 </div>
             )}
         </div>
+    );
+}
+
+function StitchCard({
+    totalScenes, finishedClips, state, aspectRatio, onStitch,
+}: {
+    totalScenes: number;
+    finishedClips: number;
+    state: StitchState;
+    aspectRatio: string;
+    onStitch: () => void;
+}) {
+    const ready = finishedClips >= 2;
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="flex items-center gap-2">
+                    <Combine className="h-4 w-4 text-accent" />
+                    <CardTitle className="text-sm">Stitch — final video</CardTitle>
+                </div>
+                <Badge variant={finishedClips === totalScenes ? 'success' : 'muted'}>
+                    {finishedClips}/{totalScenes} clips ready
+                </Badge>
+            </CardHeader>
+            <Separator />
+            <CardContent className="grid grid-cols-1 gap-6 pt-6 sm:grid-cols-[280px_1fr]">
+                <div
+                    className="grid place-items-center overflow-hidden rounded-xl border bg-muted"
+                    style={{ aspectRatio: aspectRatio.replace(':', '/') }}
+                >
+                    {state.loading ? (
+                        <div className="text-center">
+                            <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                            <div className="mt-1 text-[10px] text-muted-foreground">Stitching with ffmpeg…</div>
+                        </div>
+                    ) : state.url ? (
+                        <video src={state.url} controls playsInline className="h-full w-full object-cover" />
+                    ) : (
+                        <div className="text-center text-[11px] text-muted-foreground">
+                            <Combine className="mx-auto mb-1 h-5 w-5 opacity-40" />
+                            Generate clips first
+                        </div>
+                    )}
+                </div>
+                <div className="space-y-3">
+                    <div>
+                        <h3 className="font-semibold">One MP4, all scenes back-to-back</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Combines your finished scene clips in order. Re-encodes to a uniform 720×1280@30fps if codecs/sizes differ, otherwise fast-concat.
+                        </p>
+                    </div>
+                    {state.error && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                            {state.error}
+                        </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            onClick={onStitch}
+                            disabled={!ready || state.loading}
+                            variant={state.url ? 'outline' : 'default'}
+                        >
+                            {state.loading ? (
+                                <><Loader2 className="h-4 w-4 animate-spin" /> Stitching…</>
+                            ) : state.url ? (
+                                <><RefreshCw className="h-4 w-4" /> Re-stitch</>
+                            ) : (
+                                <><Combine className="h-4 w-4" /> Stitch {finishedClips} clip{finishedClips === 1 ? '' : 's'}</>
+                            )}
+                        </Button>
+                        {state.url && (
+                            <Button asChild variant="ghost">
+                                <a href={state.url} download="ad-final.mp4">
+                                    <Download className="h-4 w-4" /> Download final
+                                </a>
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

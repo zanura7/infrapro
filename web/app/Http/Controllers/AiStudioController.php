@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateSceneImageJob;
+use App\Jobs\GenerateSceneVideoJob;
+use App\Jobs\StitchScenesJob;
 use App\Models\ContentJob;
 use App\Models\Product;
 use App\Models\ProductAsset;
 use App\Models\StudioTemplate;
+use App\Services\Ai\ContentStrategy;
 use App\Services\Ai\ViberAi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,9 +22,6 @@ class AiStudioController extends Controller
 {
     public function __construct(private readonly ViberAi $ai) {}
 
-    /**
-     * Wizard landing — pick product + reference image + template + scenes.
-     */
     public function index(Request $request): Response
     {
         $products = Product::query()
@@ -39,7 +40,11 @@ class AiStudioController extends Controller
     }
 
     /**
-     * Step 1 — vision analysis + 5-scene breakdown following the chosen template.
+     * Step 1 — build strategy + 5 scenes.
+     *
+     * When `skip_analyze=1` we don't call the vision LLM; instead we synthesise
+     * a minimal strategy from the chosen template's narrative_shape + product
+     * context. Faster, free, but less product-tailored.
      */
     public function analyze(Request $request): JsonResponse
     {
@@ -52,56 +57,46 @@ class AiStudioController extends Controller
             'scene_count'   => ['nullable', 'integer', 'min:3', 'max:8'],
             'clip_seconds'  => ['nullable', 'integer', 'min:4', 'max:10'],
             'aspect_ratio'  => ['nullable', 'string', 'in:9:16,1:1,4:5,16:9'],
+            'skip_analyze'  => ['nullable', 'boolean'],
         ]);
 
         $product = Product::query()
             ->where('user_id', $request->user()->id)
             ->findOrFail($request->integer('product_id'));
 
-        [$base64, $mime] = $this->resolveImageInput($request, $product);
-
         $template = $request->filled('template_slug')
             ? StudioTemplate::where('slug', $request->string('template_slug')->toString())->first()
             : null;
 
+        $skipAnalyze = $request->boolean('skip_analyze');
         $sceneCount  = (int) ($request->input('scene_count') ?: ($template->default_scene_count ?? 5));
         $clipSeconds = (int) ($request->input('clip_seconds') ?: ($template->default_clip_seconds ?? 6));
         $aspectRatio = $request->input('aspect_ratio') ?: ($template?->default_aspect_ratio ?? '9:16');
+        $language    = $request->input('language', 'indonesian');
 
         $job = ContentJob::create([
             'product_id' => $product->id,
             'user_id'    => $request->user()->id,
             'kind'       => 'strategy',
             'status'     => 'running',
-            'model'      => config('services.viber.models.text'),
+            'model'      => $skipAnalyze ? 'template-only' : config('services.viber.models.text'),
             'input'      => [
-                'language'      => $request->input('language', 'indonesian'),
+                'language'      => $language,
                 'template_slug' => $template?->slug,
                 'scene_count'   => $sceneCount,
                 'clip_seconds'  => $clipSeconds,
                 'aspect_ratio'  => $aspectRatio,
-                'context'       => $this->productContext($product),
+                'skip_analyze'  => $skipAnalyze,
             ],
             'started_at' => now(),
         ]);
 
         try {
-            $strategy = $this->ai->generateStrategy(
-                imageBase64: $base64,
-                mimeType: $mime,
-                language: $request->input('language', 'indonesian'),
-                productContext: $this->productContext($product),
-                template: $template ? [
-                    'name'            => $template->name,
-                    'description'     => $template->description,
-                    'best_for'        => $template->best_for,
-                    'narrative_shape' => $template->narrative_shape,
-                    'scene_guidance'  => $template->scene_guidance,
-                ] : null,
-                sceneCount: $sceneCount,
-                clipSeconds: $clipSeconds,
-                aspectRatio: $aspectRatio,
-            );
+            $strategy = $skipAnalyze
+                ? $this->buildTemplateStrategy($product, $template, $sceneCount, $clipSeconds, $aspectRatio, $language)
+                : $this->runAnalyzeStrategy(
+                    $request, $product, $template, $sceneCount, $clipSeconds, $aspectRatio, $language,
+                );
 
             $payload = $strategy->toArray();
             $payload['meta'] = [
@@ -109,10 +104,10 @@ class AiStudioController extends Controller
                 'scene_count'   => $sceneCount,
                 'clip_seconds'  => $clipSeconds,
                 'aspect_ratio'  => $aspectRatio,
+                'skip_analyze'  => $skipAnalyze,
             ];
 
             $job->markSucceeded(['strategy' => $payload]);
-
             return response()->json(['job_id' => $job->id, 'strategy' => $payload]);
         } catch (\Throwable $e) {
             Log::error('studio.analyze_failed', ['error' => $e->getMessage()]);
@@ -122,7 +117,7 @@ class AiStudioController extends Controller
     }
 
     /**
-     * Step 2 — generate the keyframe image for ONE scene.
+     * Step 2 — dispatch scene image generation as a queued job.
      */
     public function generateImage(Request $request): JsonResponse
     {
@@ -139,49 +134,35 @@ class AiStudioController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($request->integer('product_id'));
 
-        [$base64, $mime] = $this->resolveImageInput($request, $product);
+        [$disk, $path, $mime] = $this->resolveImageInput($request, $product);
 
         $job = ContentJob::create([
             'product_id' => $product->id,
             'user_id'    => $request->user()->id,
             'kind'       => 'poster',
-            'status'     => 'running',
+            'status'     => 'queued',
             'model'      => config('services.viber.models.image'),
             'input'      => [
                 'scene_index'  => $request->integer('scene_index'),
                 'prompt'       => $request->string('prompt')->toString(),
                 'aspect_ratio' => $request->string('aspect_ratio')->toString() ?: '9:16',
+                'image_disk'   => $disk,
+                'image_path'   => $path,
+                'image_mime'   => $mime,
             ],
-            'started_at' => now(),
         ]);
 
-        try {
-            $url = $this->ai->generateImage(
-                imageBase64: $base64,
-                mimeType: $mime,
-                prompt: $request->string('prompt')->toString(),
-                aspectRatio: $request->string('aspect_ratio')->toString() ?: '9:16',
-            );
+        GenerateSceneImageJob::dispatch($job->id);
 
-            $stored = $this->persistMedia($url, $product->id, "scene-{$request->integer('scene_index')}", 'png');
-            $job->markSucceeded(['url' => $stored['url'], 'path' => $stored['path']]);
-
-            return response()->json([
-                'job_id'      => $job->id,
-                'scene_index' => $request->integer('scene_index'),
-                'image_url'   => $stored['url'],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('studio.scene_image_failed', ['error' => $e->getMessage()]);
-            $job->markFailed($e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 422);
-        }
+        return response()->json([
+            'job_id' => $job->id,
+            'scene_index' => $request->integer('scene_index'),
+            'status' => 'queued',
+        ], 202);
     }
 
     /**
-     * Step 3 — image-to-video for ONE scene. Frontend sends the approved keyframe
-     * URL (the image generated for this scene), the per-scene video_prompt, and
-     * the voiceover_script. The video model is instructed to lip-sync that line.
+     * Step 3 — dispatch scene video generation as a queued job.
      */
     public function generateVideo(Request $request): JsonResponse
     {
@@ -199,75 +180,206 @@ class AiStudioController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($request->integer('product_id'));
 
-        [$base64, $mime] = $this->approvedImageToBase64($request->string('approved_image')->toString());
-
-        $sceneIndex = $request->integer('scene_index');
         $job = ContentJob::create([
             'product_id' => $product->id,
             'user_id'    => $request->user()->id,
             'kind'       => 'video',
-            'status'     => 'running',
+            'status'     => 'queued',
             'model'      => config('services.viber.models.video'),
             'input'      => [
-                'scene_index'      => $sceneIndex,
+                'scene_index'      => $request->integer('scene_index'),
+                'approved_image'   => $request->string('approved_image')->toString(),
                 'prompt'           => $request->string('prompt')->toString(),
                 'voiceover_script' => $request->string('voiceover_script')->toString(),
                 'aspect_ratio'     => $request->string('aspect_ratio')->toString() ?: '9:16',
                 'clip_seconds'     => $request->integer('clip_seconds') ?: 6,
             ],
-            'started_at' => now(),
         ]);
 
-        try {
-            $videoUrl = $this->ai->generateVideo(
-                imageBase64: $base64,
-                mimeType: $mime,
-                prompt: $request->string('prompt')->toString(),
-                aspectRatio: $request->string('aspect_ratio')->toString() ?: '9:16',
-                videoLength: $request->integer('clip_seconds') ?: 6,
-                voiceoverScript: $request->string('voiceover_script')->toString() ?: null,
-            );
+        GenerateSceneVideoJob::dispatch($job->id);
 
-            $stored = $this->persistMedia($videoUrl, $product->id, "scene-{$sceneIndex}-video", 'mp4');
-            $job->markSucceeded(['url' => $stored['url'], 'path' => $stored['path']]);
+        return response()->json([
+            'job_id' => $job->id,
+            'scene_index' => $request->integer('scene_index'),
+            'status' => 'queued',
+        ], 202);
+    }
 
-            return response()->json([
-                'job_id'      => $job->id,
-                'scene_index' => $sceneIndex,
-                'video_url'   => $stored['url'],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('studio.scene_video_failed', ['error' => $e->getMessage()]);
-            $job->markFailed($e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 422);
-        }
+    /**
+     * Step 4 — stitch generated scene clips into one video.
+     */
+    public function stitch(Request $request): JsonResponse
+    {
+        $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'clip_urls'  => ['required', 'array', 'min:2'],
+            'clip_urls.*'=> ['required', 'string'],
+        ]);
+
+        $product = Product::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($request->integer('product_id'));
+
+        $job = ContentJob::create([
+            'product_id' => $product->id,
+            'user_id'    => $request->user()->id,
+            'kind'       => 'stitch',
+            'status'     => 'queued',
+            'model'      => 'ffmpeg',
+            'input'      => ['clip_urls' => $request->input('clip_urls')],
+        ]);
+
+        StitchScenesJob::dispatch($job->id);
+
+        return response()->json(['job_id' => $job->id, 'status' => 'queued'], 202);
+    }
+
+    /**
+     * Polling endpoint for any ContentJob this user owns.
+     */
+    public function jobStatus(Request $request, int $id): JsonResponse
+    {
+        $job = ContentJob::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        return response()->json([
+            'id'           => $job->id,
+            'kind'         => $job->kind,
+            'status'       => $job->status,
+            'output'       => $job->output,
+            'error'        => $job->error,
+            'duration_ms'  => $job->duration_ms,
+            'started_at'   => $job->started_at,
+            'finished_at'  => $job->finished_at,
+        ]);
     }
 
     // ------------------------------------------------------------------
-    // Helpers
+    // Strategy helpers
     // ------------------------------------------------------------------
 
+    private function runAnalyzeStrategy(
+        Request $request, Product $product, ?StudioTemplate $template,
+        int $sceneCount, int $clipSeconds, string $aspectRatio, string $language,
+    ): ContentStrategy {
+        [$disk, $path, $mime] = $this->resolveImageInput($request, $product);
+        $base64 = base64_encode(Storage::disk($disk)->get($path));
+
+        return $this->ai->generateStrategy(
+            imageBase64: $base64,
+            mimeType: $mime,
+            language: $language,
+            productContext: $this->productContext($product),
+            template: $template ? [
+                'name'            => $template->name,
+                'description'     => $template->description,
+                'best_for'        => $template->best_for,
+                'narrative_shape' => $template->narrative_shape,
+                'scene_guidance'  => $template->scene_guidance,
+            ] : null,
+            sceneCount: $sceneCount,
+            clipSeconds: $clipSeconds,
+            aspectRatio: $aspectRatio,
+        );
+    }
+
+    /**
+     * Build a minimal strategy without calling the vision LLM.
+     * Uses the template's narrative_shape verbatim, salted with product context.
+     */
+    private function buildTemplateStrategy(
+        Product $product, ?StudioTemplate $template,
+        int $sceneCount, int $clipSeconds, string $aspectRatio, string $language,
+    ): ContentStrategy {
+        $shape = $template?->narrative_shape ?? array_fill(0, $sceneCount, "Scene reveal of {$product->name}.");
+        $shape = array_slice($shape, 0, $sceneCount);
+        while (count($shape) < $sceneCount) {
+            $shape[] = "Scene " . (count($shape) + 1) . " featuring {$product->name}.";
+        }
+
+        $ctx = $this->productContext($product);
+        $cameraGuide = $template?->scene_guidance
+            ?: 'Smooth camera work, clean lighting, product clearly visible at all times.';
+
+        $scenes = [];
+        foreach ($shape as $i => $bullet) {
+            $scenes[] = [
+                'index' => $i + 1,
+                'title' => "Scene " . ($i + 1),
+                'image_prompt' => trim(
+                    "Photo-realistic keyframe for an ad scene. {$bullet}\n\n"
+                    . "Product context:\n{$ctx}\n\n"
+                    . "Style: high-quality, natural lighting, product clearly visible and identical to the reference image."
+                ),
+                'video_prompt' => trim(
+                    "{$clipSeconds}-second clip starting from the supplied keyframe.\n\n"
+                    . "Scene direction: {$bullet}\n\n"
+                    . "Camera & lighting: {$cameraGuide}"
+                ),
+                'voiceover_script' => '',
+            ];
+        }
+
+        return ContentStrategy::fromArray([
+            'product' => [
+                'name' => $product->name,
+                'category' => $product->category ?? '',
+                'description' => $product->description ?? '',
+                'key_features' => $product->usp ?? [],
+            ],
+            'audience' => [
+                'primary' => $product->target_audience ?? 'General consumers',
+                'psychographics' => '',
+                'pain_points' => array_filter([$product->pain_point]),
+            ],
+            'strategy' => [
+                'angle' => 'aspiration',
+                'rationale' => 'Template-driven (analyze skipped). Adjust per scene as needed.',
+            ],
+            'format' => [
+                'type' => 'short_video',
+                'aspect_ratio' => $aspectRatio,
+                'rationale' => 'Template default.',
+            ],
+            'hook' => $product->name,
+            'cta' => match ($language) {
+                'malay' => 'Dapatkan sekarang.',
+                'english' => 'Shop now.',
+                default => 'Yuk pesan sekarang.',
+            },
+            'scenes' => $scenes,
+        ]);
+    }
+
+    // ------------------------------------------------------------------
+    // Image input helpers
+    // ------------------------------------------------------------------
+
+    /**
+     * Returns [disk, relativePath, mime] — always pointing at a real file the
+     * job can read later.
+     */
     private function resolveImageInput(Request $request, Product $product): array
     {
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            return [base64_encode(file_get_contents($file->getRealPath())), $file->getMimeType()];
+            $path = $file->store("temp/inputs/{$product->id}", 'local');
+            return ['local', $path, $file->getMimeType()];
         }
 
         if ($id = $request->input('asset_id')) {
             $asset = ProductAsset::query()
                 ->where('product_id', $product->id)
                 ->findOrFail($id);
-            $contents = Storage::disk($asset->disk)->get($asset->path);
-            return [base64_encode($contents), $asset->mime];
+            return [$asset->disk, $asset->path, $asset->mime];
         }
 
         $asset = $product->assets()->where('type', 'image')->latest()->first();
         if (! $asset) {
             abort(422, 'No product image available. Upload one first.');
         }
-        $contents = Storage::disk($asset->disk)->get($asset->path);
-        return [base64_encode($contents), $asset->mime];
+        return [$asset->disk, $asset->path, $asset->mime];
     }
 
     private function productContext(Product $product): string
@@ -282,55 +394,5 @@ class AiStudioController extends Controller
             $product->description ? "Description: {$product->description}" : null,
         ]);
         return implode("\n", $bits);
-    }
-
-    private function approvedImageToBase64(string $src): array
-    {
-        if (str_starts_with($src, 'data:')) {
-            if (preg_match('/^data:([^;]+);base64,(.+)$/', $src, $m)) {
-                return [$m[2], $m[1]];
-            }
-            abort(422, 'Bad data URI.');
-        }
-
-        $storagePrefix = '/storage/';
-        $path = parse_url($src, PHP_URL_PATH);
-        if ($path && str_starts_with($path, $storagePrefix)) {
-            $relative = substr($path, strlen($storagePrefix));
-            $contents = Storage::disk('public')->get($relative);
-            $mime = Storage::disk('public')->mimeType($relative) ?: 'image/png';
-            return [base64_encode($contents), $mime];
-        }
-
-        $bytes = @file_get_contents($src);
-        if ($bytes === false) {
-            abort(422, 'Could not fetch approved image.');
-        }
-        return [base64_encode($bytes), 'image/png'];
-    }
-
-    private function persistMedia(string $src, int $productId, string $kind, string $ext): array
-    {
-        $name = sprintf('products/%d/%s-%s.%s', $productId, $kind, uniqid(), $ext);
-
-        if (str_starts_with($src, 'data:')) {
-            if (! preg_match('/^data:[^;]+;base64,(.+)$/', $src, $m)) {
-                abort(500, 'Malformed media data URI.');
-            }
-            Storage::disk('public')->put($name, base64_decode($m[1]));
-        } elseif (str_starts_with($src, 'http')) {
-            $bytes = @file_get_contents($src);
-            if ($bytes === false) {
-                abort(500, 'Failed to fetch generated media.');
-            }
-            Storage::disk('public')->put($name, $bytes);
-        } else {
-            abort(500, 'Unknown media src.');
-        }
-
-        return [
-            'path' => $name,
-            'url'  => Storage::disk('public')->url($name),
-        ];
     }
 }
