@@ -63,3 +63,6 @@ web/bootstrap/cache/*.php
 web/public/build/
 web/public/storage
 web/public/hot
+
+# Local deploy helpers (host-side scripts, not app code)
+.deploy/
