@@ -21,6 +21,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "[deploy] cwd: $(pwd)"
+
+# ---------- 0. Pull latest (skip with SKIP_GIT_PULL=1, e.g. when ServerAvatar pulled already) ----------
+if [ -z "${SKIP_GIT_PULL:-}" ] && [ -d "$SCRIPT_DIR/../.git" ]; then
+    echo "[deploy] git fetch + reset to origin/main..."
+    (cd "$SCRIPT_DIR/.." && git fetch origin main && git reset --hard origin/main)
+fi
+
 echo "[deploy] commit: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 # ---------- 1. PHP deps ----------
