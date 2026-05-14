@@ -69,6 +69,20 @@ type StitchState = {
 
 const POLL_INTERVAL_MS = 3000;
 
+function extractErr(e: any, fallback: string): string {
+    const data = e?.response?.data;
+    // Laravel validation errors: { message: "...", errors: { field: ["msg"] } }
+    if (data?.errors && typeof data.errors === 'object') {
+        const lines = Object.values(data.errors).flat() as string[];
+        if (lines.length) return lines.join('\n');
+    }
+    // Our controller's response_json(['error' => '...'], 422)
+    if (data?.error) return String(data.error);
+    // abort(422, '...') style: { message: '...' }
+    if (data?.message) return String(data.message);
+    return e?.message || fallback;
+}
+
 async function pollJob(jobId: number): Promise<{ status: string; output: any; error: any }> {
     const { data } = await axios.get(route('studio.job', { id: jobId }));
     return data;
@@ -158,7 +172,7 @@ export default function StudioIndex({ products, templates }: { products: Product
             const { data } = await axios.post(route('studio.analyze'), fd);
             setStrategy(data.strategy);
         } catch (e: any) {
-            setError(e?.response?.data?.error || e?.message || 'Analyze failed.');
+            setError(extractErr(e, 'Analyze failed.'));
         } finally {
             setAnalyzing(false);
         }
@@ -188,7 +202,7 @@ export default function StudioIndex({ products, templates }: { products: Product
         } catch (e: any) {
             updateScene(scene.index, {
                 image_loading: false,
-                error: e?.response?.data?.error || e?.message || 'Image dispatch failed.',
+                error: extractErr(e, 'Image dispatch failed.'),
             });
         }
     };
@@ -222,7 +236,7 @@ export default function StudioIndex({ products, templates }: { products: Product
         } catch (e: any) {
             updateScene(scene.index, {
                 video_loading: false,
-                error: e?.response?.data?.error || e?.message || 'Video dispatch failed.',
+                error: extractErr(e, 'Video dispatch failed.'),
             });
         }
     };
@@ -251,7 +265,7 @@ export default function StudioIndex({ products, templates }: { products: Product
                 setStitchState({ loading: false, error: result.error?.message || 'Stitch failed.' });
             }
         } catch (e: any) {
-            setStitchState({ loading: false, error: e?.response?.data?.error || e?.message || 'Stitch dispatch failed.' });
+            setStitchState({ loading: false, error: extractErr(e, 'Stitch dispatch failed.') });
         }
     };
 

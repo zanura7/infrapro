@@ -109,19 +109,59 @@ class ViberAi
             ],
         ];
 
-        $raw = $this->extractText($this->chat($body, timeout: 90));
+        // Force JSON mode if the proxy honours it. Some OpenAI-compatible
+        // servers accept response_format; if it's rejected, the second attempt
+        // (without it) takes over.
+        $bodyWithJsonMode = $body + ['response_format' => ['type' => 'json_object']];
+
+        $data = $this->tryStrategy($bodyWithJsonMode)
+            ?? $this->tryStrategy($body); // fallback: same prompt without response_format
+
+        if ($data === null) {
+            throw new RuntimeException('Strategy model returned non-JSON output twice in a row. Try a different image, or toggle "Skip vision analyze" to use the template directly.');
+        }
+
+        return ContentStrategy::fromArray($data);
+    }
+
+    /**
+     * Run one strategy attempt. Returns decoded array on success, null on a
+     * non-JSON response (so the caller can retry). Real HTTP errors still
+     * propagate as exceptions.
+     */
+    private function tryStrategy(array $body): ?array
+    {
+        try {
+            $raw = $this->extractText($this->chat($body, timeout: 90));
+        } catch (RuntimeException $e) {
+            // If the proxy rejects response_format with a 4xx, surface that
+            // by returning null so the caller drops the option and retries.
+            if (isset($body['response_format'])) {
+                Log::warning('strategy.response_format_rejected', ['error' => $e->getMessage()]);
+                return null;
+            }
+            throw $e;
+        }
+
         if ($raw === '') {
-            throw new RuntimeException('Empty response from strategy model.');
+            Log::warning('strategy.empty_response');
+            return null;
+        }
+
+        // Guard: if the model returned a media link instead of JSON, bail
+        // (so we can retry without response_format or fall through to error).
+        if (preg_match('/^\s*\[(?:video|image|audio)\]\(https?:\/\//i', $raw)) {
+            Log::warning('strategy.media_response_instead_of_json', ['raw_head' => mb_substr($raw, 0, 200)]);
+            return null;
         }
 
         $json = $this->extractJson($raw);
         $data = json_decode($json, true);
         if (! is_array($data)) {
             Log::warning('strategy.malformed_json', ['raw_head' => mb_substr($raw, 0, 400)]);
-            throw new RuntimeException("Strategy model returned malformed JSON. First 300 chars:\n" . mb_substr($raw, 0, 300));
+            return null;
         }
-
-        return ContentStrategy::fromArray($data);
+        return $data;
     }
 
     /**
@@ -322,7 +362,15 @@ You are a senior creative director for short-form affiliate marketing video ads.
 You analyze a product image and design a {$sceneCount}-scene video ad,
 producing per-scene prompts a downstream image/video model can execute.
 
-You MUST return ONLY valid JSON. No prose before or after, no markdown fences.
+ABSOLUTE OUTPUT RULES:
+- You are a TEXT-ONLY response. DO NOT generate, render, or return any media
+  (no video links, no image links, no audio, no markdown like `[video](...)`
+  or `![image](...)` or `<video>` / `<img>` tags). You ONLY produce text JSON.
+- Your downstream consumer is another program that will read your JSON and
+  call dedicated image and video generation models itself. You must NOT call
+  them or pretend to.
+- Return ONLY one valid JSON object. No prose before or after, no markdown
+  code fences, no commentary.
 The JSON shape:
 
 {
