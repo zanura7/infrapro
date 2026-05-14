@@ -243,10 +243,14 @@ class ViberAi
         string $prompt,
         string $aspectRatio = '9:16',
         ?string $negativePrompt = null,
+        string $preset = 'high',
     ): string {
+        // Negative prompt is passed BOTH ways for compatibility:
+        //   - as a structured field in image_config (if proxy supports it)
+        //   - appended inline (Grok/OpenAI-style fallback)
         $effectivePrompt = $prompt;
         if ($negativePrompt) {
-            $effectivePrompt .= "\n\nNegative prompt: " . $negativePrompt;
+            $effectivePrompt .= "\n\nAVOID (negative prompt): " . $negativePrompt;
         }
 
         if ($imageBase64 && $mimeType) {
@@ -258,13 +262,21 @@ class ViberAi
             $content = $effectivePrompt;
         }
 
+        $imageConfig = [
+            'aspect_ratio' => $aspectRatio,
+            'preset' => $preset,
+        ];
+        if ($negativePrompt) {
+            $imageConfig['negative_prompt'] = $negativePrompt;
+        }
+
         $body = [
             'model' => $this->models['image'] ?? 'grok-imagine-1.0',
             'messages' => [['role' => 'user', 'content' => $content]],
-            'image_config' => ['aspect_ratio' => $aspectRatio],
+            'image_config' => $imageConfig,
         ];
 
-        return $this->extractMediaUrl($this->chat($body, timeout: 120), kind: 'image');
+        return $this->extractMediaUrl($this->chat($body, timeout: 180), kind: 'image');
     }
 
     /**
