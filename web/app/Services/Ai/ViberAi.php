@@ -43,11 +43,21 @@ class ViberAi
     // Public surface
     // ------------------------------------------------------------------
 
+    /**
+     * Vision analysis + 5-scene ad breakdown. If $template is passed, the
+     * strategy LLM follows that narrative shape; otherwise it picks freely.
+     *
+     * @param array{name:string,description:string,best_for?:string,narrative_shape:array,scene_guidance:string}|null $template
+     */
     public function generateStrategy(
         string $imageBase64,
         string $mimeType,
         string $language = 'indonesian',
         ?string $productContext = null,
+        ?array $template = null,
+        int $sceneCount = 5,
+        int $clipSeconds = 6,
+        ?string $aspectRatio = null,
         ?string $model = null,
     ): ContentStrategy {
         $languageName = match ($language) {
@@ -56,28 +66,50 @@ class ViberAi
             default => 'English (global/Western)',
         };
 
-        $userPrompt = "Analyze the attached product image and produce the content strategy JSON.\n\n"
-            . "Target language for hook, cta, and any human dialogue inside prompts: {$languageName}.\n\n"
-            . ($productContext ? "Additional product context from the seller:\n{$productContext}\n\n" : '')
-            . 'Remember: return ONLY the JSON object, nothing else.';
+        $userBlocks = [
+            "Analyze the attached product image and produce the multi-scene content strategy JSON.",
+            "Target language for hook, cta, and all `voiceover_script` lines: {$languageName}.",
+            "Number of scenes: {$sceneCount}. Each clip will be exactly {$clipSeconds} seconds long.",
+        ];
+
+        if ($aspectRatio) {
+            $userBlocks[] = "Aspect ratio: {$aspectRatio}.";
+        }
+
+        if ($productContext) {
+            $userBlocks[] = "Product context from the seller:\n{$productContext}";
+        }
+
+        if ($template) {
+            $userBlocks[] = "TEMPLATE TO FOLLOW: " . ($template['name'] ?? '');
+            $userBlocks[] = "Template description: " . ($template['description'] ?? '');
+            if (! empty($template['narrative_shape'])) {
+                $userBlocks[] = "Narrative shape (use as the spine of the 5 scenes — adapt to the actual product/audience):\n- " . implode("\n- ", $template['narrative_shape']);
+            }
+            if (! empty($template['scene_guidance'])) {
+                $userBlocks[] = "Scene guidance: " . $template['scene_guidance'];
+            }
+        }
+
+        $userBlocks[] = 'Remember: return ONLY the JSON object, nothing else.';
 
         $dataUrl = "data:{$mimeType};base64,{$imageBase64}";
 
         $body = [
             'model' => $model ?: ($this->models['text'] ?? 'grok-4.20-beta'),
             'messages' => [
-                ['role' => 'system', 'content' => $this->strategySystemPrompt()],
+                ['role' => 'system', 'content' => $this->strategySystemPrompt($sceneCount, $clipSeconds)],
                 [
                     'role' => 'user',
                     'content' => [
-                        ['type' => 'text', 'text' => $userPrompt],
+                        ['type' => 'text', 'text' => implode("\n\n", $userBlocks)],
                         ['type' => 'image_url', 'image_url' => ['url' => $dataUrl]],
                     ],
                 ],
             ],
         ];
 
-        $raw = $this->extractText($this->chat($body));
+        $raw = $this->extractText($this->chat($body, timeout: 90));
         if ($raw === '') {
             throw new RuntimeException('Empty response from strategy model.');
         }
@@ -121,23 +153,31 @@ class ViberAi
 
     /**
      * Returns a video URL or data: URI. Video gen is slow (1–3 min).
+     * If $voiceoverScript is passed, an instruction is appended so the
+     * on-screen person actually speaks that line in the generated clip.
      */
     public function generateVideo(
         ?string $imageBase64,
         ?string $mimeType,
         string $prompt,
         string $aspectRatio = '9:16',
-        int $videoLength = 8,
+        int $videoLength = 6,
         string $resolution = '480p',
         string $preset = 'normal',
+        ?string $voiceoverScript = null,
     ): string {
+        $effectivePrompt = $prompt;
+        if ($voiceoverScript) {
+            $effectivePrompt .= "\n\nThe on-screen person speaks this line, lip-synced, with natural prosody: \"{$voiceoverScript}\"";
+        }
+
         if ($imageBase64 && $mimeType) {
             $content = [
-                ['type' => 'text', 'text' => $prompt],
+                ['type' => 'text', 'text' => $effectivePrompt],
                 ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageBase64}"]],
             ];
         } else {
-            $content = $prompt;
+            $content = $effectivePrompt;
         }
 
         $body = [
@@ -275,12 +315,12 @@ class ViberAi
         throw new RuntimeException("No {$kind} returned by the model.");
     }
 
-    private function strategySystemPrompt(): string
+    private function strategySystemPrompt(int $sceneCount, int $clipSeconds): string
     {
-        return <<<'PROMPT'
-You are a senior content strategist for affiliate marketing.
-You analyze product images and decide the best creative strategy + format,
-then output prompts a downstream image/video model can execute.
+        return <<<PROMPT
+You are a senior creative director for short-form affiliate marketing video ads.
+You analyze a product image and design a {$sceneCount}-scene video ad,
+producing per-scene prompts a downstream image/video model can execute.
 
 You MUST return ONLY valid JSON. No prose before or after, no markdown fences.
 The JSON shape:
@@ -302,15 +342,29 @@ The JSON shape:
     "rationale": "1-2 sentences why this angle fits this product + audience"
   },
   "format": {
-    "type": "one of: single_poster | carousel | reel | story | short_video",
+    "type": "short_video",
     "aspect_ratio": "one of: 9:16 | 1:1 | 4:5 | 16:9",
-    "rationale": "1-2 sentences why this format wins for this product"
+    "rationale": "1-2 sentences why this aspect ratio wins for this product"
   },
-  "hook": "the headline / first 3 seconds — punchy, max 12 words, in the requested language",
+  "hook": "the opening line / first 3 seconds — punchy, max 12 words, in the requested language",
   "cta": "the call to action — max 8 words, in the requested language",
-  "image_prompt": "detailed text-to-image prompt. Lock the product's exact shape, color, label, packaging. Include environment + people + lighting + camera style. The product must look IDENTICAL to the reference.",
-  "video_prompt": "detailed image-to-video prompt for an 8-second clip starting from the generated image. Describe the motion, camera movement, and human interaction. Keep the product identity locked."
+  "scenes": [
+    {
+      "index": 1,
+      "title": "short label (e.g. 'Hook', 'Problem', 'Solution', 'Demo', 'CTA')",
+      "image_prompt": "detailed text-to-image prompt for the KEYFRAME of this scene. Lock the product's exact shape, color, label, packaging. Include environment + people + wardrobe + lighting + camera angle + framing. The product must look IDENTICAL to the reference image. This image will be the FIRST FRAME of a {$clipSeconds}-second image-to-video clip, so compose it accordingly.",
+      "video_prompt": "detailed image-to-video prompt for the {$clipSeconds}-second clip starting from this keyframe. Describe motion, camera movement, human action/expression beats. Do NOT describe the voiceover here — that goes in voiceover_script. Keep product identity locked.",
+      "voiceover_script": "the ONE line the on-screen person speaks in this {$clipSeconds}-second clip, in the requested language. Keep it natural, conversational, ~10–18 words max. This will be lip-synced by the video model."
+    }
+    // ... exactly {$sceneCount} scenes total. Each scene must visually advance the narrative.
+  ]
 }
+
+Rules:
+- Produce EXACTLY {$sceneCount} scenes, numbered 1..{$sceneCount}.
+- Each scene's image_prompt must be self-contained (the image model only sees that prompt + reference image, not other scenes).
+- voiceover_script lines should string together to tell a coherent {$sceneCount}-beat story when played in sequence.
+- Honor the supplied TEMPLATE narrative_shape if one is provided — map each bullet to one scene in order.
 PROMPT;
     }
 }

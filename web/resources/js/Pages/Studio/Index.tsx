@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import {
-    ArrowRight, Brain, Check, CheckCircle2, ChevronRight, Download,
+    ArrowRight, Brain, Check, Download, Film,
     Image as ImageIcon, Loader2, Megaphone, Package, RefreshCw, RotateCcw,
     Sparkles, Target, Upload, Video, X,
 } from 'lucide-react';
@@ -20,13 +20,24 @@ import { cn } from '@/lib/utils';
 
 type Asset = { id: number; type: string; url: string };
 type Product = {
-    id: number;
-    slug: string;
-    name: string;
-    category: string | null;
-    price: string | null;
-    currency: string;
+    id: number; slug: string; name: string;
+    category: string | null; price: string | null; currency: string;
     assets: Asset[];
+};
+type Template = {
+    id: number; slug: string; name: string;
+    description: string | null; best_for: string | null;
+    narrative_shape: string[];
+    default_scene_count: number;
+    default_clip_seconds: number;
+    default_aspect_ratio: string;
+};
+type Scene = {
+    index: number;
+    title: string;
+    image_prompt: string;
+    video_prompt: string;
+    voiceover_script: string;
 };
 type Strategy = {
     product: { name: string; category: string; description: string; key_features: string[] };
@@ -35,22 +46,28 @@ type Strategy = {
     format: { type: string; aspect_ratio: string; rationale: string };
     hook: string;
     cta: string;
-    image_prompt: string;
-    video_prompt: string;
+    scenes: Scene[];
+    meta?: { aspect_ratio: string; clip_seconds: number; scene_count: number; template_slug: string | null };
 };
 
-type Step = 'pick' | 'analyzing' | 'strategy' | 'generating-image' | 'image-review' | 'generating-video' | 'done';
+type SceneState = {
+    image_url?: string;
+    video_url?: string;
+    image_loading?: boolean;
+    video_loading?: boolean;
+    error?: string;
+};
 
-export default function StudioIndex({ products }: { products: Product[] }) {
-    const [step, setStep] = useState<Step>('pick');
+export default function StudioIndex({ products, templates }: { products: Product[]; templates: Template[] }) {
     const [productId, setProductId] = useState<number | null>(products[0]?.id ?? null);
     const [assetId, setAssetId] = useState<number | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
+    const [templateSlug, setTemplateSlug] = useState<string | null>(templates[0]?.slug ?? null);
     const [language, setLanguage] = useState<'indonesian' | 'malay' | 'english'>('indonesian');
+    const [analyzing, setAnalyzing] = useState(false);
     const [strategy, setStrategy] = useState<Strategy | null>(null);
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [sceneStates, setSceneStates] = useState<Record<number, SceneState>>({});
     const [error, setError] = useState<string | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -58,21 +75,18 @@ export default function StudioIndex({ products }: { products: Product[] }) {
         () => products.find((p) => p.id === productId) || null,
         [productId, products],
     );
+    const selectedTemplate = useMemo(
+        () => templates.find((t) => t.slug === templateSlug) || null,
+        [templateSlug, templates],
+    );
 
-    const stepIndex: number = useMemo(() => {
-        if (step === 'pick') return 1;
-        if (step === 'analyzing') return 2;
-        if (step === 'strategy' || step === 'generating-image') return 3;
-        if (step === 'image-review') return 4;
-        return 5;
-    }, [step]);
+    const aspectRatio = strategy?.meta?.aspect_ratio || selectedTemplate?.default_aspect_ratio || '9:16';
+    const clipSeconds = strategy?.meta?.clip_seconds || selectedTemplate?.default_clip_seconds || 6;
 
     const reset = () => {
         setStrategy(null);
-        setImageUrl(null);
-        setVideoUrl(null);
+        setSceneStates({});
         setError(null);
-        setStep('pick');
     };
 
     const onFile = (f: File) => {
@@ -83,64 +97,77 @@ export default function StudioIndex({ products }: { products: Product[] }) {
         setAssetId(null);
     };
 
+    const updateScene = (i: number, patch: Partial<SceneState>) =>
+        setSceneStates((s) => ({ ...s, [i]: { ...(s[i] || {}), ...patch } }));
+
+    const buildImagePayload = () => {
+        const fd = new FormData();
+        fd.append('product_id', String(productId));
+        if (assetId) fd.append('asset_id', String(assetId));
+        if (uploadedFile) fd.append('image', uploadedFile);
+        return fd;
+    };
+
     const analyze = async () => {
         if (!productId) { setError('Select a product first.'); return; }
         if (!assetId && !uploadedFile && !selectedProduct?.assets.length) {
             setError('Upload an image or pick a product asset.'); return;
         }
         setError(null);
-        setStep('analyzing');
+        setAnalyzing(true);
+        setStrategy(null);
+        setSceneStates({});
         try {
-            const fd = new FormData();
-            fd.append('product_id', String(productId));
+            const fd = buildImagePayload();
             fd.append('language', language);
-            if (assetId) fd.append('asset_id', String(assetId));
-            if (uploadedFile) fd.append('image', uploadedFile);
+            if (templateSlug) fd.append('template_slug', templateSlug);
             const { data } = await axios.post(route('studio.analyze'), fd);
             setStrategy(data.strategy);
-            setStep('strategy');
         } catch (e: any) {
             setError(e?.response?.data?.error || e?.message || 'Analyze failed.');
-            setStep('pick');
+        } finally {
+            setAnalyzing(false);
         }
     };
 
-    const generateImage = async () => {
-        if (!productId || !strategy) return;
-        setError(null);
-        setStep('generating-image');
+    const generateSceneImage = async (scene: Scene) => {
+        if (!productId) return;
+        updateScene(scene.index, { image_loading: true, error: undefined });
         try {
-            const fd = new FormData();
-            fd.append('product_id', String(productId));
-            fd.append('prompt', strategy.image_prompt);
-            fd.append('aspect_ratio', strategy.format.aspect_ratio || '9:16');
-            if (assetId) fd.append('asset_id', String(assetId));
-            if (uploadedFile) fd.append('image', uploadedFile);
+            const fd = buildImagePayload();
+            fd.append('scene_index', String(scene.index));
+            fd.append('prompt', scene.image_prompt);
+            fd.append('aspect_ratio', aspectRatio);
             const { data } = await axios.post(route('studio.image'), fd);
-            setImageUrl(data.image_url);
-            setStep('image-review');
+            updateScene(scene.index, { image_url: data.image_url, image_loading: false });
         } catch (e: any) {
-            setError(e?.response?.data?.error || e?.message || 'Image generation failed.');
-            setStep('strategy');
+            updateScene(scene.index, {
+                image_loading: false,
+                error: e?.response?.data?.error || e?.message || 'Image gen failed.',
+            });
         }
     };
 
-    const generateVideo = async () => {
-        if (!productId || !strategy || !imageUrl) return;
-        setError(null);
-        setStep('generating-video');
+    const generateSceneVideo = async (scene: Scene) => {
+        const st = sceneStates[scene.index];
+        if (!productId || !st?.image_url) return;
+        updateScene(scene.index, { video_loading: true, error: undefined });
         try {
             const { data } = await axios.post(route('studio.video'), {
                 product_id: productId,
-                approved_image: imageUrl,
-                prompt: strategy.video_prompt,
-                aspect_ratio: strategy.format.aspect_ratio || '9:16',
+                scene_index: scene.index,
+                approved_image: st.image_url,
+                prompt: scene.video_prompt,
+                voiceover_script: scene.voiceover_script,
+                aspect_ratio: aspectRatio,
+                clip_seconds: clipSeconds,
             });
-            setVideoUrl(data.video_url);
-            setStep('done');
+            updateScene(scene.index, { video_url: data.video_url, video_loading: false });
         } catch (e: any) {
-            setError(e?.response?.data?.error || e?.message || 'Video generation failed.');
-            setStep('image-review');
+            updateScene(scene.index, {
+                video_loading: false,
+                error: e?.response?.data?.error || e?.message || 'Video gen failed.',
+            });
         }
     };
 
@@ -157,29 +184,14 @@ export default function StudioIndex({ products }: { products: Product[] }) {
                         </div>
                         <h1 className="font-display text-3xl font-semibold sm:text-4xl">AI Content Studio</h1>
                         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                            Not a generator. <em className="font-serif">A strategist.</em> Image → strategy → image → video. Approve at each step.
+                            Pick a product, pick a template, get a 5-scene video ad. Each clip is image-to-video, voiceover lip-synced.
                         </p>
                     </div>
-                    {(strategy || imageUrl || videoUrl) && (
+                    {strategy && (
                         <Button variant="ghost" size="sm" onClick={reset}>
                             <RotateCcw className="h-4 w-4" /> Start over
                         </Button>
                     )}
-                </div>
-
-                {/* Stepper — horizontal scroll on mobile */}
-                <div className="mb-6 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 sm:mb-8">
-                    <div className="flex min-w-max items-center gap-2 sm:gap-3">
-                        <StepPill index={1} current={stepIndex} label="Pick" icon={Upload} />
-                        <Connector active={stepIndex >= 2} />
-                        <StepPill index={2} current={stepIndex} label="Analyze" icon={Brain} />
-                        <Connector active={stepIndex >= 3} />
-                        <StepPill index={3} current={stepIndex} label="Image" icon={ImageIcon} />
-                        <Connector active={stepIndex >= 4} />
-                        <StepPill index={4} current={stepIndex} label="Approve" icon={Check} />
-                        <Connector active={stepIndex >= 5} />
-                        <StepPill index={5} current={stepIndex} label="Video" icon={Video} />
-                    </div>
                 </div>
 
                 {error && (
@@ -215,9 +227,7 @@ export default function StudioIndex({ products }: { products: Product[] }) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {products.map((p) => (
-                                                <SelectItem key={p.id} value={p.id.toString()}>
-                                                    {p.name}
-                                                </SelectItem>
+                                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -289,6 +299,41 @@ export default function StudioIndex({ products }: { products: Product[] }) {
 
                             <Card>
                                 <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-3">
+                                    <Film className="h-4 w-4 text-accent" />
+                                    <CardTitle className="text-sm">Template</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    {templates.length === 0 && (
+                                        <p className="text-xs text-muted-foreground">No templates available. Ask admin to seed.</p>
+                                    )}
+                                    {templates.map((t) => (
+                                        <button
+                                            key={t.slug}
+                                            type="button"
+                                            onClick={() => setTemplateSlug(t.slug === templateSlug ? null : t.slug)}
+                                            className={cn(
+                                                'w-full rounded-lg border p-3 text-left transition',
+                                                templateSlug === t.slug
+                                                    ? 'border-accent bg-accent/5 ring-1 ring-accent/30'
+                                                    : 'border-border hover:border-accent/40',
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="font-medium text-sm">{t.name}</div>
+                                                {templateSlug === t.slug && (
+                                                    <Check className="h-4 w-4 shrink-0 text-accent" />
+                                                )}
+                                            </div>
+                                            {t.description && (
+                                                <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2">{t.description}</p>
+                                            )}
+                                        </button>
+                                    ))}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-3">
                                     <Target className="h-4 w-4 text-accent" />
                                     <CardTitle className="text-sm">Language</CardTitle>
                                 </CardHeader>
@@ -305,7 +350,6 @@ export default function StudioIndex({ products }: { products: Product[] }) {
                                                 onClick={() => setLanguage(l.id)}
                                                 size="sm"
                                                 variant={language === l.id ? 'default' : 'outline'}
-                                                className="text-sm"
                                             >
                                                 {l.label}
                                             </Button>
@@ -314,66 +358,38 @@ export default function StudioIndex({ products }: { products: Product[] }) {
                                 </CardContent>
                             </Card>
 
-                            <Button
-                                onClick={analyze}
-                                disabled={step === 'analyzing'}
-                                size="lg"
-                                className="w-full"
-                            >
-                                {step === 'analyzing' ? (
+                            <Button onClick={analyze} disabled={analyzing} size="lg" className="w-full">
+                                {analyzing ? (
                                     <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing…</>
                                 ) : strategy ? (
                                     <><RefreshCw className="h-4 w-4" /> Re-analyze</>
                                 ) : (
-                                    <><Brain className="h-4 w-4" /> Analyze image</>
+                                    <><Brain className="h-4 w-4" /> Analyze &amp; build scenes</>
                                 )}
                             </Button>
                         </aside>
 
                         {/* Pipeline */}
                         <main className="space-y-4 lg:col-span-8 lg:space-y-5">
-                            {step === 'pick' && !strategy && <PickHint />}
-
-                            {step === 'analyzing' && (
+                            {!strategy && !analyzing && <PickHint />}
+                            {analyzing && (
                                 <LoadingCard
-                                    title="Analyzing image…"
-                                    subtitle="Vision LLM identifies the product, audience, and best creative angle."
+                                    title="Analyzing image &amp; building 5 scenes…"
+                                    subtitle="Vision LLM identifies the product and drafts your scene breakdown."
                                 />
                             )}
 
-                            {strategy && step !== 'analyzing' && (
-                                <StrategyCard
-                                    strategy={strategy}
-                                    generating={step === 'generating-image'}
-                                    hasImage={!!imageUrl}
-                                    onGenerate={generateImage}
-                                />
-                            )}
-
-                            {step === 'generating-image' && (
-                                <LoadingCard title="Generating image…" subtitle="Compositing product reference with the chosen prompt." />
-                            )}
-
-                            {imageUrl && (step === 'image-review' || step === 'generating-video' || step === 'done') && (
-                                <ImageReviewCard
-                                    url={imageUrl}
-                                    aspectRatio={strategy?.format.aspect_ratio || '9:16'}
-                                    onRegenerate={generateImage}
-                                    onApprove={generateVideo}
-                                    videoStarted={step === 'generating-video' || step === 'done'}
-                                />
-                            )}
-
-                            {step === 'generating-video' && (
-                                <LoadingCard title="Rendering 8-second video…" subtitle="Image-to-video can take 1–3 minutes." long />
-                            )}
-
-                            {videoUrl && step === 'done' && (
-                                <VideoCard
-                                    url={videoUrl}
-                                    aspectRatio={strategy?.format.aspect_ratio || '9:16'}
-                                    onRegenerate={generateVideo}
-                                />
+                            {strategy && (
+                                <>
+                                    <StrategySummary strategy={strategy} />
+                                    <ScenesGrid
+                                        scenes={strategy.scenes}
+                                        states={sceneStates}
+                                        aspectRatio={aspectRatio}
+                                        onGenerateImage={generateSceneImage}
+                                        onGenerateVideo={generateSceneVideo}
+                                    />
+                                </>
                             )}
                         </main>
                     </div>
@@ -386,29 +402,6 @@ export default function StudioIndex({ products }: { products: Product[] }) {
 // ============================================================
 // Sub-components
 // ============================================================
-function StepPill({ index, current, label, icon: Icon }: { index: number; current: number; label: string; icon: any }) {
-    const done = current > index;
-    const active = current === index;
-    return (
-        <div
-            className={cn(
-                'flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap',
-                done
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                    : active
-                        ? 'bg-primary text-primary-foreground shadow-soft'
-                        : 'bg-muted text-muted-foreground',
-            )}
-        >
-            {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
-            <span>{label}</span>
-        </div>
-    );
-}
-
-function Connector({ active }: { active: boolean }) {
-    return <div className={cn('h-px w-6 sm:flex-1', active ? 'bg-emerald-300' : 'bg-border')} />;
-}
 
 function PickHint() {
     return (
@@ -417,37 +410,30 @@ function PickHint() {
                 <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-accent/10">
                     <Sparkles className="h-8 w-8 text-accent" />
                 </div>
-                <h3 className="font-display text-xl font-semibold sm:text-2xl">Pick a product + image to start.</h3>
+                <h3 className="font-display text-xl font-semibold sm:text-2xl">Pick a product, image &amp; template to start.</h3>
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    The AI strategist inspects the image, picks an angle and format, then generates an ad image and (after you approve) a short video.
+                    The strategist inspects the image, follows the chosen template, and breaks the ad into 5 scenes — each with its own keyframe, video prompt, and lip-sync line.
                 </p>
             </div>
         </Card>
     );
 }
 
-function LoadingCard({ title, subtitle, long }: { title: string; subtitle: string; long?: boolean }) {
+function LoadingCard({ title, subtitle }: { title: string; subtitle: string }) {
     return (
         <Card className="flex items-start gap-5 p-6 sm:p-8">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-accent/10">
                 <Loader2 className="h-6 w-6 animate-spin text-accent" />
             </div>
             <div className="flex-1">
-                <div className="font-semibold">{title}</div>
+                <div className="font-semibold" dangerouslySetInnerHTML={{ __html: title }} />
                 <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>
-                {long && (
-                    <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full animate-pulse bg-accent" style={{ width: '60%' }} />
-                    </div>
-                )}
             </div>
         </Card>
     );
 }
 
-function StrategyCard({
-    strategy, generating, hasImage, onGenerate,
-}: { strategy: Strategy; generating: boolean; hasImage: boolean; onGenerate: () => void }) {
+function StrategySummary({ strategy }: { strategy: Strategy }) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -455,96 +441,38 @@ function StrategyCard({
                     <Brain className="h-4 w-4 text-accent" />
                     <CardTitle className="text-sm">Strategy</CardTitle>
                 </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Step 2 of 5</span>
+                <div className="flex items-center gap-2">
+                    {strategy.meta?.template_slug && (
+                        <Badge variant="accent" className="capitalize">{strategy.meta.template_slug.replace(/-/g, ' ')}</Badge>
+                    )}
+                    <Badge variant="muted" className="font-mono">{strategy.meta?.aspect_ratio || '9:16'}</Badge>
+                    <Badge variant="muted">{strategy.meta?.clip_seconds || 6}s / scene</Badge>
+                </div>
             </CardHeader>
             <Separator />
-            <CardContent className="space-y-6 pt-6">
+            <CardContent className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2">
                 <Pane label="Product">
-                    <div className="flex flex-wrap items-baseline gap-x-3">
-                        <div className="text-lg font-semibold">{strategy.product.name}</div>
-                        <div className="text-xs text-muted-foreground">{strategy.product.category}</div>
-                    </div>
+                    <div className="text-base font-semibold">{strategy.product.name}</div>
+                    <div className="text-xs text-muted-foreground">{strategy.product.category}</div>
                     <p className="mt-1 text-sm text-muted-foreground">{strategy.product.description}</p>
-                    {strategy.product.key_features?.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                            {strategy.product.key_features.map((f) => (
-                                <Badge key={f} variant="muted" className="font-normal">
-                                    {f}
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
                 </Pane>
-
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <Pane label="Audience">
-                        <div className="text-sm font-medium">{strategy.audience.primary}</div>
-                        <p className="mt-1 text-xs text-muted-foreground">{strategy.audience.psychographics}</p>
-                        {strategy.audience.pain_points?.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                                {strategy.audience.pain_points.map((p) => <li key={p}>· {p}</li>)}
-                            </ul>
-                        )}
-                    </Pane>
-                    <Pane label="Angle">
-                        <Badge variant="accent" className="uppercase tracking-wide">
-                            {strategy.strategy.angle}
-                        </Badge>
-                        <p className="mt-2 text-xs text-muted-foreground">{strategy.strategy.rationale}</p>
-                    </Pane>
-                    <Pane label="Format">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="accent">{strategy.format.type.replace(/_/g, ' ')}</Badge>
-                            <Badge variant="muted" className="font-mono">{strategy.format.aspect_ratio}</Badge>
-                        </div>
-                        <p className="mt-2 text-xs text-muted-foreground">{strategy.format.rationale}</p>
-                    </Pane>
-                    <Pane label="Hook + CTA">
-                        <div className="font-serif text-base italic text-foreground/80">"{strategy.hook}"</div>
-                        <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Megaphone className="h-3.5 w-3.5" /> {strategy.cta}
-                        </div>
-                    </Pane>
-                </div>
-
-                <details className="group">
-                    <summary className="flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                        <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
-                        View raw image &amp; video prompts
-                    </summary>
-                    <div className="mt-3 space-y-3">
-                        <div>
-                            <div className="mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Image prompt</div>
-                            <pre className="whitespace-pre-wrap rounded-lg border bg-muted p-3 text-xs leading-relaxed">
-                                {strategy.image_prompt}
-                            </pre>
-                        </div>
-                        <div>
-                            <div className="mb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Video prompt</div>
-                            <pre className="whitespace-pre-wrap rounded-lg border bg-muted p-3 text-xs leading-relaxed">
-                                {strategy.video_prompt}
-                            </pre>
-                        </div>
+                <Pane label="Audience">
+                    <div className="text-sm font-medium">{strategy.audience.primary}</div>
+                    <p className="mt-1 text-xs text-muted-foreground">{strategy.audience.psychographics}</p>
+                </Pane>
+                <Pane label="Angle">
+                    <Badge variant="accent" className="uppercase tracking-wide">
+                        {strategy.strategy.angle}
+                    </Badge>
+                    <p className="mt-2 text-xs text-muted-foreground">{strategy.strategy.rationale}</p>
+                </Pane>
+                <Pane label="Hook + CTA">
+                    <div className="font-serif text-base italic text-foreground/80">"{strategy.hook}"</div>
+                    <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Megaphone className="h-3.5 w-3.5" /> {strategy.cta}
                     </div>
-                </details>
+                </Pane>
             </CardContent>
-            <Separator />
-            <div className="flex flex-col items-stretch gap-3 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                <div className="text-xs text-muted-foreground">Happy with this direction?</div>
-                <Button
-                    onClick={onGenerate}
-                    disabled={generating}
-                    variant={hasImage ? 'outline' : 'default'}
-                >
-                    {generating ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
-                    ) : hasImage ? (
-                        <><RefreshCw className="h-4 w-4" /> Regenerate image</>
-                    ) : (
-                        <><Sparkles className="h-4 w-4" /> Generate image</>
-                    )}
-                </Button>
-            </div>
         </Card>
     );
 }
@@ -558,98 +486,170 @@ function Pane({ label, children }: { label: string; children: React.ReactNode })
     );
 }
 
-function ImageReviewCard({
-    url, aspectRatio, onRegenerate, onApprove, videoStarted,
-}: { url: string; aspectRatio: string; onRegenerate: () => void; onApprove: () => void; videoStarted: boolean }) {
+function ScenesGrid({
+    scenes, states, aspectRatio, onGenerateImage, onGenerateVideo,
+}: {
+    scenes: Scene[];
+    states: Record<number, SceneState>;
+    aspectRatio: string;
+    onGenerateImage: (scene: Scene) => void;
+    onGenerateVideo: (scene: Scene) => void;
+}) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-accent" />
-                    <CardTitle className="text-sm">Image · review &amp; approve</CardTitle>
-                    <Badge variant="muted" className="font-mono">{aspectRatio}</Badge>
+                    <Film className="h-4 w-4 text-accent" />
+                    <CardTitle className="text-sm">Scenes ({scenes.length})</CardTitle>
                 </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Step 3–4 of 5</span>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Generate per scene
+                </span>
             </CardHeader>
             <Separator />
-            <CardContent className="grid grid-cols-1 gap-6 pt-6 sm:grid-cols-[280px_1fr]">
-                <div
-                    className="overflow-hidden rounded-xl border bg-muted"
-                    style={{ aspectRatio: aspectRatio.replace(':', '/') }}
-                >
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <h3 className="font-semibold">Does this image work?</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Approve to kick off image-to-video, or regenerate.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" onClick={onRegenerate}>
-                            <RefreshCw className="h-4 w-4" /> Regenerate
-                        </Button>
-                        <Button asChild variant="outline">
-                            <a href={url} download="approved-image.png">
-                                <Download className="h-4 w-4" /> Download
-                            </a>
-                        </Button>
-                        <Button
-                            onClick={onApprove}
-                            disabled={videoStarted}
-                            variant={videoStarted ? 'secondary' : 'success'}
-                        >
-                            {videoStarted ? (
-                                <><CheckCircle2 className="h-4 w-4" /> Approved · generating video</>
-                            ) : (
-                                <><Check className="h-4 w-4" /> Approve &amp; generate video</>
-                            )}
-                        </Button>
-                    </div>
-                </div>
+            <CardContent className="space-y-4 pt-6">
+                {scenes.map((scene) => (
+                    <SceneRow
+                        key={scene.index}
+                        scene={scene}
+                        state={states[scene.index] || {}}
+                        aspectRatio={aspectRatio}
+                        onGenerateImage={() => onGenerateImage(scene)}
+                        onGenerateVideo={() => onGenerateVideo(scene)}
+                    />
+                ))}
             </CardContent>
         </Card>
     );
 }
 
-function VideoCard({ url, aspectRatio, onRegenerate }: { url: string; aspectRatio: string; onRegenerate: () => void }) {
+function SceneRow({
+    scene, state, aspectRatio, onGenerateImage, onGenerateVideo,
+}: {
+    scene: Scene;
+    state: SceneState;
+    aspectRatio: string;
+    onGenerateImage: () => void;
+    onGenerateVideo: () => void;
+}) {
+    const hasImage = !!state.image_url;
+    const hasVideo = !!state.video_url;
+
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <div className="flex items-center gap-2">
-                    <Video className="h-4 w-4 text-accent" />
-                    <CardTitle className="text-sm">Video · ready</CardTitle>
-                    <Badge variant="success">DONE</Badge>
-                </div>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Step 5 of 5</span>
-            </CardHeader>
-            <Separator />
-            <CardContent className="grid grid-cols-1 gap-6 pt-6 sm:grid-cols-[280px_1fr]">
-                <div
-                    className="overflow-hidden rounded-xl border bg-black"
-                    style={{ aspectRatio: aspectRatio.replace(':', '/') }}
-                >
-                    <video src={url} controls playsInline className="h-full w-full object-cover" />
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <h3 className="font-semibold">Your clip is ready.</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">Download it, post it, or re-render.</p>
-                    </div>
+        <div className="rounded-xl border bg-muted/30 p-4 sm:p-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[200px_1fr]">
+                {/* Media column */}
+                <div className="space-y-2">
+                    <MediaSlot
+                        kind={hasVideo ? 'video' : 'image'}
+                        url={hasVideo ? state.video_url : state.image_url}
+                        loading={state.image_loading || state.video_loading}
+                        aspectRatio={aspectRatio}
+                    />
                     <div className="flex flex-wrap gap-2">
-                        <Button asChild>
-                            <a href={url} download="scene.mp4">
-                                <Download className="h-4 w-4" /> Download MP4
+                        <Button
+                            size="sm"
+                            variant={hasImage ? 'outline' : 'default'}
+                            onClick={onGenerateImage}
+                            disabled={state.image_loading || state.video_loading}
+                            className="flex-1"
+                        >
+                            {state.image_loading ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Image…</>
+                            ) : hasImage ? (
+                                <><RefreshCw className="h-3.5 w-3.5" /> Image</>
+                            ) : (
+                                <><ImageIcon className="h-3.5 w-3.5" /> Image</>
+                            )}
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={hasVideo ? 'outline' : 'success'}
+                            onClick={onGenerateVideo}
+                            disabled={!hasImage || state.video_loading || state.image_loading}
+                            className="flex-1"
+                        >
+                            {state.video_loading ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Video…</>
+                            ) : hasVideo ? (
+                                <><RefreshCw className="h-3.5 w-3.5" /> Video</>
+                            ) : (
+                                <><Video className="h-3.5 w-3.5" /> Video</>
+                            )}
+                        </Button>
+                    </div>
+                    {hasVideo && (
+                        <Button asChild size="sm" variant="ghost" className="w-full">
+                            <a href={state.video_url} download={`scene-${scene.index}.mp4`}>
+                                <Download className="h-3.5 w-3.5" /> Download clip
                             </a>
                         </Button>
-                        <Button variant="outline" onClick={onRegenerate}>
-                            <RefreshCw className="h-4 w-4" /> Regenerate video
-                        </Button>
-                    </div>
+                    )}
                 </div>
-            </CardContent>
-        </Card>
+
+                {/* Info column */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Badge variant="muted" className="font-mono">#{scene.index}</Badge>
+                        <h4 className="text-sm font-semibold">{scene.title}</h4>
+                    </div>
+                    {scene.voiceover_script && (
+                        <div className="rounded-lg border bg-card p-3">
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
+                                <Megaphone className="h-3 w-3" /> Voiceover (lip-synced)
+                            </div>
+                            <p className="font-serif italic text-foreground/90">"{scene.voiceover_script}"</p>
+                        </div>
+                    )}
+                    <details className="group">
+                        <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                            View prompts
+                        </summary>
+                        <div className="mt-2 space-y-2">
+                            <div>
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Image prompt</div>
+                                <pre className="mt-1 whitespace-pre-wrap rounded-md border bg-card p-2 text-[11px] leading-relaxed">{scene.image_prompt}</pre>
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Video prompt</div>
+                                <pre className="mt-1 whitespace-pre-wrap rounded-md border bg-card p-2 text-[11px] leading-relaxed">{scene.video_prompt}</pre>
+                            </div>
+                        </div>
+                    </details>
+                    {state.error && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                            {state.error}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MediaSlot({
+    kind, url, loading, aspectRatio,
+}: { kind: 'image' | 'video'; url?: string; loading?: boolean; aspectRatio: string }) {
+    return (
+        <div
+            className="grid w-full place-items-center overflow-hidden rounded-lg border bg-muted"
+            style={{ aspectRatio: aspectRatio.replace(':', '/') }}
+        >
+            {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : url ? (
+                kind === 'video' ? (
+                    <video src={url} controls playsInline className="h-full w-full object-cover" />
+                ) : (
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                )
+            ) : (
+                <div className="text-center text-[11px] text-muted-foreground">
+                    <ImageIcon className="mx-auto mb-1 h-5 w-5 opacity-40" />
+                    Empty
+                </div>
+            )}
+        </div>
     );
 }
 

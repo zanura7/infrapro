@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
 
         $this->seedSihate($admin);
         $this->seedOtherProducts($admin);
+        $this->call(StudioTemplateSeeder::class);
     }
 
     private function seedSihate(User $owner): void
