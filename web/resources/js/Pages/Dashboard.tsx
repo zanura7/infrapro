@@ -1,6 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Package, Sparkles, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Button } from '@/Components/ui/button';
+import { Badge } from '@/Components/ui/badge';
+import { cn } from '@/lib/utils';
 
 type Job = {
     id: number;
@@ -21,7 +25,8 @@ export default function Dashboard({ stats, recent_jobs }: Props) {
         <AuthenticatedLayout header="Dashboard" activeKey="dashboard">
             <Head title="Dashboard" />
 
-            <section className="bg-ink-950 text-white relative overflow-hidden">
+            {/* Hero */}
+            <section className="relative overflow-hidden bg-ink-950 text-white">
                 <div
                     className="absolute inset-0 opacity-40"
                     style={{
@@ -30,19 +35,20 @@ export default function Dashboard({ stats, recent_jobs }: Props) {
                         backgroundSize: '56px 56px',
                     }}
                 />
-                <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl" />
-                <div className="relative px-8 pt-10 pb-12">
-                    <div className="text-[12px] tracking-[0.22em] text-brand-400 font-semibold mb-3">
+                <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+
+                <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+                    <div className="mb-3 text-[11px] font-semibold tracking-[0.22em] text-accent sm:text-[12px]">
                         01 · OVERVIEW
                     </div>
-                    <h1 className="font-display text-4xl md:text-5xl font-semibold leading-[1.05] max-w-3xl">
-                        One product — <span className="text-brand-400">every channel.</span>
+                    <h1 className="max-w-3xl font-display text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl">
+                        One product — <span className="text-accent">every channel.</span>
                     </h1>
-                    <p className="text-white/60 mt-3 max-w-xl text-sm">
+                    <p className="mt-3 max-w-xl text-sm text-white/60">
                         Performance snapshot, recent activity, and what needs attention today.
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 max-w-4xl">
+                    <div className="mt-6 grid max-w-4xl grid-cols-2 gap-3 sm:mt-8 md:grid-cols-4">
                         <KpiCard label="PRODUCTS" value={stats.products} tone="brand" />
                         <KpiCard label="CONTENT JOBS" value={stats.content} tone="brand" />
                         <KpiCard label="SPEND · MONTH" value={`RM ${stats.spend.toFixed(2)}`} tone="brand" />
@@ -51,54 +57,53 @@ export default function Dashboard({ stats, recent_jobs }: Props) {
                 </div>
             </section>
 
-            <div className="px-8 py-8 grid grid-cols-12 gap-6">
-                <div className="col-span-12 lg:col-span-8 bg-white rounded-xl border border-ink-200 shadow-soft p-6">
-                    <div className="flex items-center justify-between mb-5">
-                        <div>
-                            <h3 className="font-display text-xl font-semibold">Recent activity</h3>
-                            <p className="text-xs text-ink-900/50 mt-0.5">Last 10 AI jobs</p>
-                        </div>
-                    </div>
+            {/* Body */}
+            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                    <Card className="lg:col-span-8">
+                        <CardHeader>
+                            <CardTitle className="font-display text-xl">Recent activity</CardTitle>
+                            <p className="text-xs text-muted-foreground">Last 10 AI jobs</p>
+                        </CardHeader>
+                        <CardContent>
+                            {recent_jobs.length === 0 ? (
+                                <div className="py-10 text-center text-muted-foreground">
+                                    <Sparkles className="mx-auto mb-2 h-8 w-8 opacity-40" />
+                                    <p className="text-sm">No activity yet. Start with a product.</p>
+                                    <Button asChild size="sm" className="mt-3">
+                                        <Link href={route('products.create')}>+ Add product</Link>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <ul className="divide-y divide-border">
+                                    {recent_jobs.map((job) => (
+                                        <li key={job.id} className="flex items-center gap-3 py-3 sm:gap-4">
+                                            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                                                <Sparkles className="h-4 w-4" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="truncate text-sm">
+                                                    <span className="font-medium">{job.product?.name || 'Unknown product'}</span>
+                                                    <span className="text-muted-foreground"> · </span>
+                                                    <span className="capitalize text-muted-foreground">{job.kind}</span>
+                                                </div>
+                                                <div className="text-[11px] text-muted-foreground">
+                                                    {new Date(job.created_at).toLocaleString()} · cost RM {Number(job.cost).toFixed(2)}
+                                                </div>
+                                            </div>
+                                            <StatusPill status={job.status} />
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                    {recent_jobs.length === 0 ? (
-                        <div className="py-10 text-center text-ink-900/40">
-                            <Sparkles className="w-8 h-8 mx-auto mb-2 text-ink-200" />
-                            <p className="text-sm">No activity yet. Start with a product.</p>
-                            <Link
-                                href={route('products.create')}
-                                className="inline-flex mt-3 px-3 py-1.5 text-xs font-medium rounded-md bg-ink-900 text-white hover:bg-ink-950"
-                            >
-                                + Add product
-                            </Link>
-                        </div>
-                    ) : (
-                        <ul className="space-y-1">
-                            {recent_jobs.map((job) => (
-                                <li key={job.id} className="flex items-center gap-4 py-3 border-b border-ink-100 last:border-0">
-                                    <div className="w-9 h-9 rounded-lg bg-brand-50 grid place-items-center text-brand-600 shrink-0">
-                                        <Sparkles className="w-4 h-4" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm">
-                                            <span className="font-medium">{job.product?.name || 'Unknown product'}</span>
-                                            {' · '}
-                                            <span className="capitalize text-ink-900/70">{job.kind}</span>
-                                        </div>
-                                        <div className="text-[11px] text-ink-900/50">
-                                            {new Date(job.created_at).toLocaleString()} · cost RM {Number(job.cost).toFixed(2)}
-                                        </div>
-                                    </div>
-                                    <StatusPill status={job.status} />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-
-                <div className="col-span-12 lg:col-span-4 space-y-6">
-                    <div className="bg-white rounded-xl border border-ink-200 shadow-soft p-6">
-                        <h3 className="font-display text-xl font-semibold mb-4">Quick actions</h3>
-                        <div className="space-y-2">
+                    <Card className="lg:col-span-4">
+                        <CardHeader>
+                            <CardTitle className="font-display text-xl">Quick actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
                             <QuickAction
                                 href={route('studio.index')}
                                 icon={Sparkles}
@@ -121,8 +126,8 @@ export default function Dashboard({ stats, recent_jobs }: Props) {
                                 tone="flame"
                                 disabled
                             />
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -132,11 +137,11 @@ export default function Dashboard({ stats, recent_jobs }: Props) {
 function KpiCard({
     label, value, suffix = '', tone = 'brand',
 }: { label: string; value: string | number; suffix?: string; tone?: 'brand' | 'flame' }) {
-    const accent = tone === 'flame' ? 'text-flame-400' : 'text-brand-400';
+    const accent = tone === 'flame' ? 'text-flame-400' : 'text-accent';
     return (
-        <div className="bg-white/[0.04] backdrop-blur ring-1 ring-white/10 rounded-xl p-4">
-            <div className={`text-[10px] tracking-widest ${accent}`}>{label}</div>
-            <div className="font-display text-3xl mt-1">
+        <div className="rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/10 backdrop-blur sm:p-4">
+            <div className={cn('text-[10px] tracking-widest', accent)}>{label}</div>
+            <div className="mt-1 font-display text-2xl sm:text-3xl">
                 {value}
                 {suffix && <span className={accent}>{suffix}</span>}
             </div>
@@ -147,48 +152,48 @@ function KpiCard({
 function QuickAction({
     href, icon: Icon, title, subtitle, tone, disabled,
 }: { href: string; icon: any; title: string; subtitle: string; tone: 'brand' | 'flame'; disabled?: boolean }) {
-    const bg = tone === 'flame' ? 'bg-flame-50 text-flame-600' : 'bg-brand-50 text-brand-600';
+    const bg = tone === 'flame' ? 'bg-flame-50 text-flame-600' : 'bg-accent/10 text-accent';
+    const body = (
+        <>
+            <div className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-md', bg)}>
+                <Icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{title}</div>
+                <div className="text-[11px] text-muted-foreground">{subtitle}</div>
+            </div>
+            {!disabled && <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+        </>
+    );
+
     if (disabled) {
         return (
-            <div className="w-full flex items-center gap-3 p-3 rounded-lg border border-ink-200 opacity-60 cursor-not-allowed">
-                <div className={`w-9 h-9 rounded-md grid place-items-center ${bg}`}>
-                    <Icon className="w-4 h-4" />
-                </div>
-                <div className="flex-1">
-                    <div className="text-sm font-medium">{title}</div>
-                    <div className="text-[11px] text-ink-900/50">{subtitle}</div>
-                </div>
+            <div className="flex w-full cursor-not-allowed items-center gap-3 rounded-lg border p-3 opacity-60">
+                {body}
             </div>
         );
     }
     return (
         <Link
             href={href}
-            className="w-full flex items-center gap-3 p-3 rounded-lg border border-ink-200 hover:border-brand-500 hover:bg-brand-50/50 transition text-left group"
+            className="group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition hover:border-accent hover:bg-accent/5"
         >
-            <div className={`w-9 h-9 rounded-md grid place-items-center ${bg}`}>
-                <Icon className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-[11px] text-ink-900/50">{subtitle}</div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-ink-900/30" />
+            {body}
         </Link>
     );
 }
 
 function StatusPill({ status }: { status: string }) {
-    const styles: Record<string, string> = {
-        succeeded: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        running: 'bg-brand-50 text-brand-700 ring-brand-200',
-        queued: 'bg-ink-100 text-ink-900 ring-ink-200',
-        failed: 'bg-flame-50 text-flame-700 ring-flame-200',
-        cancelled: 'bg-ink-100 text-ink-900/60 ring-ink-200',
+    const map: Record<string, 'success' | 'accent' | 'muted' | 'destructive'> = {
+        succeeded: 'success',
+        running: 'accent',
+        queued: 'muted',
+        failed: 'destructive',
+        cancelled: 'muted',
     };
     return (
-        <span className={`text-[11px] px-2 py-0.5 rounded-full ring-1 capitalize ${styles[status] || styles.queued}`}>
+        <Badge variant={map[status] || 'muted'} className="capitalize">
             {status}
-        </span>
+        </Badge>
     );
 }
