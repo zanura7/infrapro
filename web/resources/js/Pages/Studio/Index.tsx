@@ -156,6 +156,11 @@ export default function StudioIndex({ products, templates }: { products: Product
     const analyze = async () => {
         if (!productId) { setError('Select a product first.'); return; }
         if (!templateSlug) { setError('Pick a template first.'); return; }
+        const hasImage = !!(assetId || uploadedFile || selectedProduct?.assets.length);
+        if (!hasImage) {
+            setError('Upload or pick a reference image first — it’s used as the visual seed for every scene.');
+            return;
+        }
         setError(null);
         setAnalyzing(true);
         setStrategy(null);
@@ -168,6 +173,11 @@ export default function StudioIndex({ products, templates }: { products: Product
                 language,
             });
             setStrategy(data.strategy);
+            // Auto-dispatch image generation for all scenes in parallel — the
+            // queue worker pool (3 workers) handles concurrency on the server.
+            (data.strategy.scenes as Scene[]).forEach((scene) => {
+                generateSceneImage(scene);
+            });
         } catch (e: any) {
             setError(extractErr(e, 'Build scenes failed.'));
         } finally {
