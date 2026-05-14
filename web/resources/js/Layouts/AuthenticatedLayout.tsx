@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Bell, LayoutDashboard, LogOut, Megaphone, Menu, Package, Plug, Search,
+    Bell, Image as ImageIcon, LayoutDashboard, LogOut, Megaphone, Menu, Package, Plug, Search,
     Send, Settings2, Sparkles, Users,
 } from 'lucide-react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
@@ -14,13 +14,14 @@ import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { cn } from '@/lib/utils';
 
-type NavKey = 'dashboard' | 'products' | 'studio' | 'posting' | 'ads' | 'team' | 'integrations' | 'settings';
+type NavKey = 'dashboard' | 'products' | 'studio' | 'poster' | 'posting' | 'ads' | 'team' | 'integrations' | 'settings';
 type Props = PropsWithChildren<{ header?: ReactNode; activeKey?: NavKey }>;
 
 const NAV_PRIMARY: { key: NavKey; href: string; label: string; icon: any; badge?: string; disabled?: boolean }[] = [
     { key: 'dashboard', href: route('dashboard'),      label: 'Dashboard',         icon: LayoutDashboard },
     { key: 'products',  href: route('products.index'), label: 'Product Hub',       icon: Package },
-    { key: 'studio',    href: route('studio.index'),   label: 'AI Content Studio', icon: Sparkles },
+    { key: 'studio',    href: route('studio.index'),   label: 'AI Studio · Video', icon: Sparkles },
+    { key: 'poster',    href: route('poster.index'),   label: 'Image Poster',      icon: ImageIcon },
     { key: 'posting',   href: '#',                     label: 'Auto Posting',      icon: Send,      badge: 'P2', disabled: true },
     { key: 'ads',       href: '#',                     label: 'Ads Integration',   icon: Megaphone, badge: 'P3', disabled: true },
 ];

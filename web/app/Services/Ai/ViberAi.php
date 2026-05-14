@@ -233,24 +233,34 @@ class ViberAi
     /**
      * Returns a string ready to use as <img src>:
      * either a data:image/...;base64,... URI or an https URL.
+     *
+     * Reference image is optional. When omitted, this is pure text-to-image
+     * generation (used by the poster flow).
      */
     public function generateImage(
-        string $imageBase64,
-        string $mimeType,
+        ?string $imageBase64,
+        ?string $mimeType,
         string $prompt,
         string $aspectRatio = '9:16',
+        ?string $negativePrompt = null,
     ): string {
-        $dataUrl = "data:{$mimeType};base64,{$imageBase64}";
+        $effectivePrompt = $prompt;
+        if ($negativePrompt) {
+            $effectivePrompt .= "\n\nNegative prompt: " . $negativePrompt;
+        }
+
+        if ($imageBase64 && $mimeType) {
+            $content = [
+                ['type' => 'text', 'text' => $effectivePrompt],
+                ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageBase64}"]],
+            ];
+        } else {
+            $content = $effectivePrompt;
+        }
 
         $body = [
             'model' => $this->models['image'] ?? 'grok-imagine-1.0',
-            'messages' => [[
-                'role' => 'user',
-                'content' => [
-                    ['type' => 'text', 'text' => $prompt],
-                    ['type' => 'image_url', 'image_url' => ['url' => $dataUrl]],
-                ],
-            ]],
+            'messages' => [['role' => 'user', 'content' => $content]],
             'image_config' => ['aspect_ratio' => $aspectRatio],
         ];
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiStudioController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PosterController;
 use App\Http\Controllers\ProductAssetController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -34,6 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/studio/generate-video', [AiStudioController::class, 'generateVideo'])->name('studio.video');
     Route::post('/studio/stitch', [AiStudioController::class, 'stitch'])->name('studio.stitch');
     Route::get('/studio/jobs/{id}', [AiStudioController::class, 'jobStatus'])->name('studio.job');
+
+    // Image Poster — single-image promotional banner generator
+    Route::get('/poster', [PosterController::class, 'index'])->name('poster.index');
+    Route::post('/poster/generate', [PosterController::class, 'generate'])->name('poster.generate');
+    Route::get('/poster/jobs/{id}', [PosterController::class, 'jobStatus'])->name('poster.job');
 });
 
 Route::middleware('auth')->group(function () {
