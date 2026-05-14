@@ -125,6 +125,72 @@ class ViberAi
     }
 
     /**
+     * Text-only strategy build — no reference image attached. Uses the
+     * chosen template + product context to design the 5-scene breakdown.
+     * Cheaper and avoids the "vision model emits media link" edge case.
+     */
+    public function generateStrategyFromTemplate(
+        string $language = 'indonesian',
+        ?string $productContext = null,
+        ?array $template = null,
+        int $sceneCount = 5,
+        int $clipSeconds = 6,
+        ?string $aspectRatio = null,
+        ?string $model = null,
+    ): ContentStrategy {
+        $languageName = match ($language) {
+            'indonesian' => 'Indonesian (Bahasa Indonesia)',
+            'malay' => 'Malaysian (Bahasa Melayu)',
+            default => 'English (global/Western)',
+        };
+
+        $userBlocks = [
+            "Design a {$sceneCount}-scene short-form video ad strategy as JSON.",
+            "Target language for hook, cta, and all `voiceover_script` lines: {$languageName}.",
+            "Each clip will be exactly {$clipSeconds} seconds long.",
+        ];
+
+        if ($aspectRatio) {
+            $userBlocks[] = "Aspect ratio: {$aspectRatio}.";
+        }
+
+        if ($productContext) {
+            $userBlocks[] = "PRODUCT (from seller):\n{$productContext}";
+        }
+
+        if ($template) {
+            $userBlocks[] = "TEMPLATE TO FOLLOW: " . ($template['name'] ?? '');
+            $userBlocks[] = "Template description: " . ($template['description'] ?? '');
+            if (! empty($template['narrative_shape'])) {
+                $userBlocks[] = "Narrative shape (use as the spine of the {$sceneCount} scenes — map each bullet to one scene in order):\n- "
+                    . implode("\n- ", $template['narrative_shape']);
+            }
+            if (! empty($template['scene_guidance'])) {
+                $userBlocks[] = "Scene guidance: " . $template['scene_guidance'];
+            }
+        }
+
+        $userBlocks[] = 'Remember: return ONLY the JSON object, nothing else.';
+
+        $body = [
+            'model' => $model ?: ($this->models['text'] ?? 'grok-4.20-beta'),
+            'messages' => [
+                ['role' => 'system', 'content' => $this->strategySystemPrompt($sceneCount, $clipSeconds)],
+                ['role' => 'user', 'content' => implode("\n\n", $userBlocks)],
+            ],
+        ];
+
+        $bodyWithJsonMode = $body + ['response_format' => ['type' => 'json_object']];
+        $data = $this->tryStrategy($bodyWithJsonMode) ?? $this->tryStrategy($body);
+
+        if ($data === null) {
+            throw new RuntimeException('Strategy model returned non-JSON output twice. Try regenerating, or pick a different template.');
+        }
+
+        return ContentStrategy::fromArray($data);
+    }
+
+    /**
      * Run one strategy attempt. Returns decoded array on success, null on a
      * non-JSON response (so the caller can retry). Real HTTP errors still
      * propagate as exceptions.

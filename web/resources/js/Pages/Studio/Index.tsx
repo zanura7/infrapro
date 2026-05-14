@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
     ArrowRight, Brain, Check, Combine, Download, Film,
     Image as ImageIcon, Loader2, Megaphone, Package, RefreshCw, RotateCcw,
-    Sparkles, Target, Upload, Video, X, Zap,
+    Sparkles, Target, Upload, Video, X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -47,7 +47,7 @@ type Strategy = {
     hook: string;
     cta: string;
     scenes: Scene[];
-    meta?: { aspect_ratio: string; clip_seconds: number; scene_count: number; template_slug: string | null; skip_analyze?: boolean };
+    meta?: { aspect_ratio: string; clip_seconds: number; scene_count: number; template_slug: string | null };
 };
 
 type SceneState = {
@@ -103,7 +103,6 @@ export default function StudioIndex({ products, templates }: { products: Product
     const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
     const [templateSlug, setTemplateSlug] = useState<string | null>(templates[0]?.slug ?? null);
     const [language, setLanguage] = useState<'indonesian' | 'malay' | 'english'>('indonesian');
-    const [skipAnalyze, setSkipAnalyze] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [strategy, setStrategy] = useState<Strategy | null>(null);
     const [sceneStates, setSceneStates] = useState<Record<number, SceneState>>({});
@@ -156,23 +155,21 @@ export default function StudioIndex({ products, templates }: { products: Product
 
     const analyze = async () => {
         if (!productId) { setError('Select a product first.'); return; }
-        if (!skipAnalyze && !assetId && !uploadedFile && !selectedProduct?.assets.length) {
-            setError('Upload an image or pick a product asset.'); return;
-        }
+        if (!templateSlug) { setError('Pick a template first.'); return; }
         setError(null);
         setAnalyzing(true);
         setStrategy(null);
         setSceneStates({});
         setStitchState({});
         try {
-            const fd = buildImagePayload();
-            fd.append('language', language);
-            if (templateSlug) fd.append('template_slug', templateSlug);
-            if (skipAnalyze) fd.append('skip_analyze', '1');
-            const { data } = await axios.post(route('studio.analyze'), fd);
+            const { data } = await axios.post(route('studio.analyze'), {
+                product_id: productId,
+                template_slug: templateSlug,
+                language,
+            });
             setStrategy(data.strategy);
         } catch (e: any) {
-            setError(extractErr(e, 'Analyze failed.'));
+            setError(extractErr(e, 'Build scenes failed.'));
         } finally {
             setAnalyzing(false);
         }
@@ -437,43 +434,26 @@ export default function StudioIndex({ products, templates }: { products: Product
                             <Card>
                                 <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-3">
                                     <Target className="h-4 w-4 text-accent" />
-                                    <CardTitle className="text-sm">Options</CardTitle>
+                                    <CardTitle className="text-sm">Voiceover language</CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div>
-                                        <Label className="mb-2 block text-[11px] text-muted-foreground">Voiceover language</Label>
-                                        <div className="grid grid-cols-3 gap-1.5">
-                                            {([
-                                                { id: 'indonesian', label: '🇮🇩 ID' },
-                                                { id: 'malay', label: '🇲🇾 MY' },
-                                                { id: 'english', label: '🇬🇧 EN' },
-                                            ] as const).map((l) => (
-                                                <Button
-                                                    key={l.id}
-                                                    type="button"
-                                                    onClick={() => setLanguage(l.id)}
-                                                    size="sm"
-                                                    variant={language === l.id ? 'default' : 'outline'}
-                                                >
-                                                    {l.label}
-                                                </Button>
-                                            ))}
-                                        </div>
+                                <CardContent>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        {([
+                                            { id: 'indonesian', label: '🇮🇩 ID' },
+                                            { id: 'malay', label: '🇲🇾 MY' },
+                                            { id: 'english', label: '🇬🇧 EN' },
+                                        ] as const).map((l) => (
+                                            <Button
+                                                key={l.id}
+                                                type="button"
+                                                onClick={() => setLanguage(l.id)}
+                                                size="sm"
+                                                variant={language === l.id ? 'default' : 'outline'}
+                                            >
+                                                {l.label}
+                                            </Button>
+                                        ))}
                                     </div>
-                                    <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-xs hover:bg-muted/40">
-                                        <input
-                                            type="checkbox"
-                                            checked={skipAnalyze}
-                                            onChange={(e) => setSkipAnalyze(e.target.checked)}
-                                            className="mt-0.5 h-3.5 w-3.5 rounded border-border text-primary focus:ring-ring"
-                                        />
-                                        <span className="flex-1">
-                                            <span className="font-medium">Skip vision analyze</span>
-                                            <span className="block text-[11px] text-muted-foreground">
-                                                Use template defaults directly. Faster, free, but less product-tailored.
-                                            </span>
-                                        </span>
-                                    </label>
                                 </CardContent>
                             </Card>
 
@@ -482,10 +462,8 @@ export default function StudioIndex({ products, templates }: { products: Product
                                     <><Loader2 className="h-4 w-4 animate-spin" /> Building scenes…</>
                                 ) : strategy ? (
                                     <><RefreshCw className="h-4 w-4" /> Rebuild scenes</>
-                                ) : skipAnalyze ? (
-                                    <><Zap className="h-4 w-4" /> Build scenes from template</>
                                 ) : (
-                                    <><Brain className="h-4 w-4" /> Analyze &amp; build scenes</>
+                                    <><Brain className="h-4 w-4" /> Build scenes</>
                                 )}
                             </Button>
                         </aside>
@@ -495,11 +473,8 @@ export default function StudioIndex({ products, templates }: { products: Product
                             {!strategy && !analyzing && <PickHint />}
                             {analyzing && (
                                 <LoadingCard
-                                    title={skipAnalyze ? 'Building scenes from template…' : 'Analyzing image & building 5 scenes…'}
-                                    subtitle={skipAnalyze
-                                        ? 'No LLM call — using the template narrative directly.'
-                                        : 'Vision LLM identifies the product and drafts your scene breakdown.'
-                                    }
+                                    title="Building 5 scenes from template…"
+                                    subtitle="LLM drafts per-scene image prompt, video prompt, and voiceover line."
                                 />
                             )}
 
@@ -571,9 +546,6 @@ function StrategySummary({ strategy }: { strategy: Strategy }) {
                 <div className="flex flex-wrap items-center gap-2">
                     {strategy.meta?.template_slug && (
                         <Badge variant="accent" className="capitalize">{strategy.meta.template_slug.replace(/-/g, ' ')}</Badge>
-                    )}
-                    {strategy.meta?.skip_analyze && (
-                        <Badge variant="muted">template-only</Badge>
                     )}
                     <Badge variant="muted" className="font-mono">{strategy.meta?.aspect_ratio || '9:16'}</Badge>
                     <Badge variant="muted">{strategy.meta?.clip_seconds || 6}s / scene</Badge>
