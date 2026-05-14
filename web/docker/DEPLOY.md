@@ -1,6 +1,12 @@
-# VPS Deployment — Projek Infra
+# Docker stack — local dev (and optional VPS fallback)
 
-Pull-based Docker deployment. The VPS pulls from GitHub, builds the image, and runs the stack. No registry needed.
+> **Production at Bedaie VPS uses ServerAvatar**, not Docker. See [`../SERVERAVATAR.md`](../SERVERAVATAR.md) for the production deploy guide.
+>
+> This Docker setup is kept for two reasons:
+> 1. Local dev for contributors who don't want to install PHP/MySQL/Redis on their machine
+> 2. Fallback / portability if you ever move off ServerAvatar to a plain Docker VPS
+
+Pull-based Docker deployment. Pulls from GitHub, builds the image, runs the stack. No registry needed.
 
 ## Prerequisites on the VPS
 
