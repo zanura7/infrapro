@@ -6,6 +6,7 @@ use App\Http\Controllers\PosterController;
 use App\Http\Controllers\ProductAssetController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/poster', [PosterController::class, 'index'])->name('poster.index');
     Route::post('/poster/generate', [PosterController::class, 'generate'])->name('poster.generate');
     Route::get('/poster/jobs/{id}', [PosterController::class, 'jobStatus'])->name('poster.job');
+
+    // Settings
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 });
 
 Route::middleware('auth')->group(function () {

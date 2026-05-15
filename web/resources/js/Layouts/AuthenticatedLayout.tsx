@@ -29,7 +29,7 @@ const NAV_PRIMARY: { key: NavKey; href: string; label: string; icon: any; badge?
 const NAV_WORKSPACE: { key: NavKey; href: string; label: string; icon: any; disabled?: boolean }[] = [
     { key: 'team',         href: '#',                     label: 'Team',         icon: Users,     disabled: true },
     { key: 'integrations', href: '#',                     label: 'Integrations', icon: Plug,      disabled: true },
-    { key: 'settings',     href: route('profile.edit'),   label: 'Settings',     icon: Settings2 },
+    { key: 'settings',     href: route('settings.index'), label: 'Settings',     icon: Settings2 },
 ];
 
 export default function Authenticated({ header, activeKey, children }: Props) {

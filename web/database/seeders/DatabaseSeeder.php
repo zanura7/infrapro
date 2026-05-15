@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\ContentJob;
 use App\Models\Product;
+use App\Models\ProductAsset;
 use App\Models\ProductVersion;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -12,6 +14,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Seed Spatie roles first
+        $this->call(RoleSeeder::class);
+
+        // Admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@bedaie.id'],
             [
@@ -22,10 +28,68 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        if (! $admin->hasRole('admin')) {
+            $admin->assignRole('admin');
+        }
+
+        // Demo product with 2 assets and 2 content jobs
+        $this->seedDemoProduct($admin);
+
+        // Remaining products
         $this->seedSihate($admin);
         $this->seedOtherProducts($admin);
+
         $this->call(StudioTemplateSeeder::class);
         $this->call(PosterTemplateSeeder::class);
+    }
+
+    private function seedDemoProduct(User $owner): void
+    {
+        $product = Product::firstOrCreate(
+            ['slug' => 'demo-product'],
+            [
+                'user_id' => $owner->id,
+                'name' => 'Demo Product',
+                'sku' => 'DEMO-001',
+                'category' => 'Personal Care · Skincare',
+                'price' => 39.90,
+                'currency' => 'MYR',
+                'description' => 'A demo product used for development and testing.',
+                'usp' => ['100% natural', 'halal-certified', 'cruelty-free'],
+                'target_audience' => 'Developers and testers',
+                'pain_point' => 'Needing realistic seed data quickly.',
+                'brand_voice' => [
+                    'tone' => ['Warm', 'Trustworthy'],
+                    'formality' => 40,
+                    'dos' => ['Be helpful'],
+                    'donts' => ['Be misleading'],
+                ],
+                'current_version' => 1,
+            ]
+        );
+
+        // 2 assets
+        if ($product->assets()->count() === 0) {
+            ProductAsset::factory()->count(2)->create([
+                'product_id' => $product->id,
+                'uploaded_by' => $owner->id,
+            ]);
+        }
+
+        // 2 content jobs
+        if ($product->contentJobs()->count() === 0) {
+            ContentJob::factory()->queued()->create([
+                'product_id' => $product->id,
+                'user_id' => $owner->id,
+                'kind' => 'poster',
+            ]);
+
+            ContentJob::factory()->succeeded()->create([
+                'product_id' => $product->id,
+                'user_id' => $owner->id,
+                'kind' => 'strategy',
+            ]);
+        }
     }
 
     private function seedSihate(User $owner): void
