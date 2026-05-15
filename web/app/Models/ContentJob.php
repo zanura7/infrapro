@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ContentJob extends Model
 {
     protected $fillable = [
         'product_id',
         'user_id',
+        'parent_id',
         'kind',
         'status',
         'model',
@@ -40,6 +42,16 @@ class ContentJob extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(ContentJob::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(ContentJob::class, 'parent_id');
     }
 
     public function markRunning(): void

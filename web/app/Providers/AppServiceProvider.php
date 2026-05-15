@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Services\Ai\ViberAi;
+use App\Services\Contracts\AiProviderInterface;
+use App\Services\Contracts\ImageProviderInterface;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -11,6 +13,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ViberAi::class, fn () => ViberAi::fromConfig());
+        $this->app->bind(AiProviderInterface::class, ViberAi::class);
+        $this->app->bind(ImageProviderInterface::class, ViberAi::class);
     }
 
     public function boot(): void

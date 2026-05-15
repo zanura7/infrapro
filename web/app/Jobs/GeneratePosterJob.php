@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ContentJob;
-use App\Services\Ai\ViberAi;
+use App\Services\Contracts\ImageProviderInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,7 +21,7 @@ class GeneratePosterJob implements ShouldQueue
 
     public function __construct(public readonly int $contentJobId) {}
 
-    public function handle(ViberAi $ai): void
+    public function handle(ImageProviderInterface $ai): void
     {
         $job = ContentJob::find($this->contentJobId);
         if (! $job) return;
@@ -39,11 +39,11 @@ class GeneratePosterJob implements ShouldQueue
             }
 
             $url = $ai->generateImage(
-                imageBase64: $base64,
-                mimeType: $mime,
                 prompt: $input['prompt'],
                 aspectRatio: $input['aspect_ratio'] ?? '4:5',
                 negativePrompt: $input['negative_prompt'] ?? null,
+                imageBase64: $base64,
+                mimeType: $mime,
             );
 
             $stored = $this->persistMedia($url, $job->product_id);

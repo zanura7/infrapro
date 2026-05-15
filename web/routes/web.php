@@ -40,6 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/poster', [PosterController::class, 'index'])->name('poster.index');
     Route::post('/poster/generate', [PosterController::class, 'generate'])->name('poster.generate');
     Route::get('/poster/jobs/{id}', [PosterController::class, 'jobStatus'])->name('poster.job');
+    Route::get('/poster/jobs/{id}/batch', [PosterController::class, 'batchStatus'])->name('poster.batch');
+    Route::get('/poster/download/{id}', [PosterController::class, 'download'])->name('poster.download');
 });
 
 Route::middleware('auth')->group(function () {

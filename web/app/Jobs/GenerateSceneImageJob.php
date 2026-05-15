@@ -33,7 +33,7 @@ class GenerateSceneImageJob implements ShouldQueue
             $contents = Storage::disk($input['image_disk'])->get($input['image_path']);
             $base64 = base64_encode($contents);
 
-            $url = $ai->generateImage(
+            $url = $ai->generateImageFull(
                 imageBase64: $base64,
                 mimeType: $input['image_mime'],
                 prompt: $input['prompt'],
