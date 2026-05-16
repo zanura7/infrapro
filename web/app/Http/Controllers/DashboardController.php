@@ -28,6 +28,8 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        $showOnboarding = $products === 0 && $totalContent === 0;
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'products' => $products,
@@ -35,6 +37,7 @@ class DashboardController extends Controller
                 'spend' => round((float) $thisMonthSpend, 2),
             ],
             'recent_jobs' => $recent,
+            'show_onboarding' => $showOnboarding,
         ]);
     }
 }
