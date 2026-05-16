@@ -22,7 +22,12 @@ class ProductVersionController extends Controller
         DB::transaction(function () use ($product, $version, $request) {
             $snapshot = $version->snapshot;
 
-            $product->update($snapshot);
+            // Whitelist safe fields — never let a snapshot overwrite user_id, slug, id, timestamps.
+            $safe = collect($snapshot)->only([
+                'name', 'description', 'category', 'price', 'usp', 'target_audience', 'brand_voice',
+            ])->toArray();
+
+            $product->update($safe);
             $product->increment('current_version');
 
             ProductVersion::create([
