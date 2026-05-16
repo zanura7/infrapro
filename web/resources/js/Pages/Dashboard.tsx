@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { cn } from '@/lib/utils';
+import OnboardingWizard from '@/Components/OnboardingWizard';
 
 type Job = {
     id: number;
@@ -18,9 +19,19 @@ type Job = {
 type Props = {
     stats: { products: number; content: number; spend: number };
     recent_jobs: Job[];
+    show_onboarding: boolean;
 };
 
-export default function Dashboard({ stats, recent_jobs }: Props) {
+export default function Dashboard({ stats, recent_jobs, show_onboarding }: Props) {
+    if (show_onboarding) {
+        return (
+            <AuthenticatedLayout header="Dashboard" activeKey="dashboard">
+                <Head title="Dashboard" />
+                <OnboardingWizard />
+            </AuthenticatedLayout>
+        );
+    }
+
     return (
         <AuthenticatedLayout header="Dashboard" activeKey="dashboard">
             <Head title="Dashboard" />
