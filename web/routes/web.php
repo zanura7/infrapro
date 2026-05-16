@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PosterController;
 use App\Http\Controllers\ProductAssetController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductVersionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Product assets
     Route::post('/products/{product:slug}/assets', [ProductAssetController::class, 'store'])->name('product-assets.store');
     Route::delete('/products/{product:slug}/assets/{asset}', [ProductAssetController::class, 'destroy'])->name('product-assets.destroy');
+
+    // Product versions
+    Route::put('/products/{product:slug}/versions/{version}/restore', [ProductVersionController::class, 'restore'])->name('product-versions.restore');
 
     // AI Content Studio
     Route::get('/studio', [AiStudioController::class, 'index'])->name('studio.index');

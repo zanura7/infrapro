@@ -71,7 +71,7 @@ class ProductController extends Controller
 
         $product->load([
             'assets' => fn ($q) => $q->latest(),
-            'versions' => fn ($q) => $q->with('user:id,name')->limit(20),
+            'versions' => fn ($q) => $q->with('user:id,name')->latest('version')->limit(20),
             'contentJobs' => fn ($q) => $q->latest()->limit(20),
         ]);
 

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, History, Image as ImageIcon, Sparkles, Upload, Video } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, History, Image as ImageIcon, RotateCcw, Sparkles, Upload, Video, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 type Asset = {
@@ -18,6 +18,7 @@ type Version = {
     id: number;
     version: number;
     change_summary: string | null;
+    snapshot: Record<string, unknown> | null;
     created_at: string;
     user?: { id: number; name: string };
 };
@@ -150,7 +151,7 @@ export default function ProductShow({ product }: Props) {
                     />
                 )}
                 {tab === 'voice' && <VoicePane product={product} />}
-                {tab === 'versions' && <VersionsPane versions={product.versions} />}
+                {tab === 'versions' && <VersionsPane versions={product.versions} productSlug={product.slug} />}
                 {tab === 'content' && <ContentPane jobs={product.content_jobs} />}
 
                 <input
@@ -224,9 +225,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function AssetsPane({
     product, onUploadClick, uploading,
 }: { product: Product; onUploadClick: () => void; uploading: boolean }) {
+    type Filter = 'all' | 'image' | 'video';
+    const [filter, setFilter] = useState<Filter>('all');
+    const [lightbox, setLightbox] = useState<Asset | null>(null);
+
+    const visible = product.assets.filter((a) => {
+        if (filter === 'all') return true;
+        return a.type === filter;
+    });
+
     return (
         <div>
-            <div className="flex items-center justify-between mb-5">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
                 <div>
                     <h3 className="font-display text-xl font-semibold">Asset library</h3>
                     <p className="text-xs text-ink-900/50">{product.assets.length} files</p>
@@ -240,16 +251,47 @@ function AssetsPane({
                 </button>
             </div>
 
+            {/* Filter buttons */}
+            {product.assets.length > 0 && (
+                <div className="flex gap-2 mb-5">
+                    {(['all', 'image', 'video'] as Filter[]).map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+                                filter === f
+                                    ? 'bg-ink-900 text-white border-ink-900'
+                                    : 'bg-white text-ink-600 border-ink-200 hover:border-ink-400'
+                            }`}
+                        >
+                            {f === 'all' ? 'All' : f === 'image' ? 'Images' : 'Videos'}
+                            <span className="ml-1.5 text-[10px] opacity-60">
+                                {f === 'all'
+                                    ? product.assets.length
+                                    : product.assets.filter((a) => a.type === f).length}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {product.assets.length === 0 ? (
                 <div className="bg-white rounded-xl border-2 border-dashed border-ink-200 p-12 text-center">
                     <Upload className="w-10 h-10 text-ink-900/30 mx-auto mb-3" />
                     <p className="text-sm text-ink-900/70">No assets yet</p>
                     <p className="text-[11px] text-ink-900/40 mt-1">Upload images or videos to use as reference for AI</p>
                 </div>
+            ) : visible.length === 0 ? (
+                <p className="text-sm text-ink-900/40 py-8 text-center">No {filter}s in this library.</p>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {product.assets.map((a) => (
-                        <div key={a.id} className="aspect-square rounded-lg overflow-hidden border border-ink-200 bg-ink-100 relative group">
+                    {visible.map((a) => (
+                        <div
+                            key={a.id}
+                            className="aspect-square rounded-lg overflow-hidden border border-ink-200 bg-ink-100 relative group cursor-pointer"
+                            onClick={() => setLightbox(a)}
+                        >
+                            {/* Thumbnail */}
                             {a.type === 'image' ? (
                                 <img src={a.thumbnail_url || a.url} alt="" className="w-full h-full object-cover" />
                             ) : a.type === 'video' ? (
@@ -261,8 +303,16 @@ function AssetsPane({
                                     <ImageIcon className="w-8 h-8" />
                                 </div>
                             )}
+
+                            {/* Type badge */}
+                            <span className="absolute top-1 left-1 text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded bg-black/60 text-white">
+                                {a.type.toUpperCase()}
+                            </span>
+
+                            {/* Delete (stop propagation so click doesn't open lightbox) */}
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     if (confirm('Delete this asset?')) {
                                         router.delete(route('product-assets.destroy', [product.slug, a.id]));
                                     }
@@ -273,6 +323,44 @@ function AssetsPane({
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Lightbox */}
+            {lightbox && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                    onClick={() => setLightbox(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 text-white/80 hover:text-white"
+                        onClick={() => setLightbox(null)}
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                    <div
+                        className="max-w-5xl max-h-[90vh] overflow-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {lightbox.type === 'image' ? (
+                            <img
+                                src={lightbox.url}
+                                alt=""
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                            />
+                        ) : lightbox.type === 'video' ? (
+                            <video
+                                src={lightbox.url}
+                                controls
+                                autoPlay
+                                className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+                            />
+                        ) : null}
+                        <div className="mt-3 text-center text-white/60 text-xs">
+                            {lightbox.mime} · {(lightbox.size / 1024).toFixed(0)} KB
+                            {lightbox.tag && ` · ${lightbox.tag}`}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -337,29 +425,140 @@ function VoicePane({ product }: { product: Product }) {
     );
 }
 
-function VersionsPane({ versions }: { versions: Version[] }) {
+function VersionsPane({ versions, productSlug }: { versions: Version[]; productSlug: string }) {
+    const [diffPair, setDiffPair] = useState<[number, number] | null>(null);
+    const [restoring, setRestoring] = useState(false);
+
+    const leftVersion = diffPair ? versions.find((v) => v.id === diffPair[0]) : null;
+    const rightVersion = diffPair ? versions.find((v) => v.id === diffPair[1]) : null;
+
+    const handleRestore = (version: Version) => {
+        if (!confirm(`Restore product to version ${version.version}? This creates a new version.`)) return;
+        setRestoring(true);
+        router.put(
+            route('product-versions.restore', [productSlug, version.id]),
+            {},
+            { onFinish: () => setRestoring(false) },
+        );
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Version list */}
+            <div className="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
+                <ul className="divide-y divide-ink-100">
+                    {versions.map((v, idx) => (
+                        <li key={v.id} className="px-6 py-4 flex items-center gap-4">
+                            <div className="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-xs font-mono">
+                                v{v.version}
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-sm font-medium">{v.change_summary || 'No description'}</div>
+                                <div className="text-[11px] text-ink-900/50">
+                                    by {v.user?.name || 'system'} · {new Date(v.created_at).toLocaleString()}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {/* Compare with previous version */}
+                                {idx < versions.length - 1 && (
+                                    <button
+                                        onClick={() => setDiffPair([versions[idx + 1].id, v.id])}
+                                        className="text-[11px] px-2.5 py-1 rounded-md border border-ink-200 hover:border-ink-400 text-ink-600 transition"
+                                    >
+                                        Diff
+                                    </button>
+                                )}
+                                {/* Restore */}
+                                {idx > 0 && (
+                                    <button
+                                        onClick={() => handleRestore(v)}
+                                        disabled={restoring}
+                                        className="text-[11px] px-2.5 py-1 rounded-md border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 inline-flex items-center gap-1 transition disabled:opacity-50"
+                                    >
+                                        <RotateCcw className="w-3 h-3" /> Restore
+                                    </button>
+                                )}
+                                {idx === 0 && (
+                                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                        Current
+                                    </span>
+                                )}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Diff viewer */}
+            {leftVersion && rightVersion && (
+                <SnapshotDiff
+                    left={leftVersion}
+                    right={rightVersion}
+                    onClose={() => setDiffPair(null)}
+                />
+            )}
+        </div>
+    );
+}
+
+function SnapshotDiff({
+    left,
+    right,
+    onClose,
+}: {
+    left: Version;
+    right: Version;
+    onClose: () => void;
+}) {
+    const lSnap = left.snapshot ?? {};
+    const rSnap = right.snapshot ?? {};
+    const allKeys = Array.from(new Set([...Object.keys(lSnap), ...Object.keys(rSnap)])).sort();
+
+    const serialize = (val: unknown): string => {
+        if (val === null || val === undefined) return '—';
+        if (typeof val === 'object') return JSON.stringify(val, null, 2);
+        return String(val);
+    };
+
     return (
         <div className="bg-white rounded-2xl border border-ink-200 shadow-soft overflow-hidden">
-            <ul className="divide-y divide-ink-100">
-                {versions.map((v, idx) => (
-                    <li key={v.id} className="px-6 py-4 flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-ink-100 grid place-items-center text-xs font-mono">
-                            v{v.version}
-                        </div>
-                        <div className="flex-1">
-                            <div className="text-sm font-medium">{v.change_summary || 'No description'}</div>
-                            <div className="text-[11px] text-ink-900/50">
-                                by {v.user?.name || 'system'} · {new Date(v.created_at).toLocaleString()}
-                            </div>
-                        </div>
-                        {idx === 0 && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
-                                Current
-                            </span>
-                        )}
-                    </li>
-                ))}
-            </ul>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-ink-100">
+                <h4 className="font-display font-semibold text-sm">
+                    Comparing v{left.version} → v{right.version}
+                </h4>
+                <button onClick={onClose} className="text-ink-400 hover:text-ink-700">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                    <thead>
+                        <tr className="text-left bg-ink-50">
+                            <th className="px-4 py-2 font-medium text-ink-500 w-1/5">Field</th>
+                            <th className="px-4 py-2 font-medium text-ink-500 w-2/5">v{left.version}</th>
+                            <th className="px-4 py-2 font-medium text-ink-500 w-2/5">v{right.version}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-100">
+                        {allKeys.map((key) => {
+                            const lVal = serialize(lSnap[key]);
+                            const rVal = serialize(rSnap[key]);
+                            const changed = lVal !== rVal;
+                            return (
+                                <tr key={key} className={changed ? 'bg-amber-50/50' : ''}>
+                                    <td className="px-4 py-2 font-mono text-ink-500">{key}</td>
+                                    <td className={`px-4 py-2 whitespace-pre-wrap break-words ${changed ? 'text-red-700' : 'text-ink-700'}`}>
+                                        {lVal}
+                                    </td>
+                                    <td className={`px-4 py-2 whitespace-pre-wrap break-words ${changed ? 'text-emerald-700' : 'text-ink-700'}`}>
+                                        {rVal}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
