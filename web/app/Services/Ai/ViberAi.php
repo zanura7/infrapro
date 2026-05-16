@@ -2,6 +2,8 @@
 
 namespace App\Services\Ai;
 
+use App\Services\Contracts\AiProviderInterface;
+use App\Services\Contracts\ImageProviderInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +20,7 @@ use RuntimeException;
  * All calls force stream:false so we get plain JSON. The Viber proxy defaults
  * to SSE streaming which would break our parsers.
  */
-class ViberAi
+class ViberAi implements AiProviderInterface, ImageProviderInterface
 {
     public function __construct(
         private readonly string $apiKey,
@@ -36,6 +38,46 @@ class ViberAi
             apiKey: (string) config('services.viber.key'),
             baseUrl: rtrim((string) config('services.viber.base_url'), '/'),
             models: (array) config('services.viber.models'),
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // AiProviderInterface
+    // ------------------------------------------------------------------
+
+    /**
+     * Simple text prompt → text response (for generic chat use-cases).
+     */
+    public function chat(string $prompt, array $options = []): string
+    {
+        $body = array_merge([
+            'model' => $this->models['text'] ?? 'grok-4.20-beta',
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+        ], $options);
+
+        return $this->extractText($this->chatRaw($body));
+    }
+
+    // ------------------------------------------------------------------
+    // ImageProviderInterface
+    // ------------------------------------------------------------------
+
+    /**
+     * Interface-compliant wrapper. Delegates to the full generateImage() below.
+     */
+    public function generateImage(
+        string $prompt,
+        string $aspectRatio,
+        ?string $negativePrompt = null,
+        ?string $imageBase64 = null,
+        ?string $mimeType = null,
+    ): string {
+        return $this->generateImageFull(
+            imageBase64: $imageBase64,
+            mimeType: $mimeType,
+            prompt: $prompt,
+            aspectRatio: $aspectRatio,
+            negativePrompt: $negativePrompt,
         );
     }
 
@@ -198,7 +240,7 @@ class ViberAi
     private function tryStrategy(array $body): ?array
     {
         try {
-            $raw = $this->extractText($this->chat($body, timeout: 90));
+            $raw = $this->extractText($this->chatRaw($body, timeout: 90));
         } catch (RuntimeException $e) {
             // If the proxy rejects response_format with a 4xx, surface that
             // by returning null so the caller drops the option and retries.
@@ -237,7 +279,7 @@ class ViberAi
      * Reference image is optional. When omitted, this is pure text-to-image
      * generation (used by the poster flow).
      */
-    public function generateImage(
+    public function generateImageFull(
         ?string $imageBase64,
         ?string $mimeType,
         string $prompt,
@@ -276,7 +318,7 @@ class ViberAi
             'image_config' => $imageConfig,
         ];
 
-        return $this->extractMediaUrl($this->chat($body, timeout: 180), kind: 'image');
+        return $this->extractMediaUrl($this->chatRaw($body, timeout: 180), kind: 'image');
     }
 
     /**
@@ -319,14 +361,14 @@ class ViberAi
             ],
         ];
 
-        return $this->extractMediaUrl($this->chat($body, timeout: 300), kind: 'video');
+        return $this->extractMediaUrl($this->chatRaw($body, timeout: 300), kind: 'video');
     }
 
     // ------------------------------------------------------------------
     // HTTP plumbing
     // ------------------------------------------------------------------
 
-    private function chat(array $body, int $timeout = 60): array
+    private function chatRaw(array $body, int $timeout = 60): array
     {
         $body = ['stream' => false] + $body;
 
