@@ -59,11 +59,11 @@ class GenerateSceneImageJob implements ShouldQueue
             }
             Storage::disk('public')->put($name, base64_decode($m[1]));
         } elseif (str_starts_with($src, 'http')) {
-            $bytes = @file_get_contents($src);
-            if ($bytes === false) {
+            $response = \Illuminate\Support\Facades\Http::timeout(30)->get($src);
+            if (!$response->successful()) {
                 throw new \RuntimeException('Failed to fetch generated image.');
             }
-            Storage::disk('public')->put($name, $bytes);
+            Storage::disk('public')->put($name, $response->body());
         } else {
             throw new \RuntimeException('Unknown image src.');
         }

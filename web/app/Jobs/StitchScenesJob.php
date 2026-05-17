@@ -123,11 +123,11 @@ class StitchScenesJob implements ShouldQueue
             $relative = substr($path, strlen($storagePrefix));
             return Storage::disk('public')->get($relative);
         }
-        $bytes = @file_get_contents($url);
-        if ($bytes === false) {
+        $response = \Illuminate\Support\Facades\Http::timeout(60)->get($url);
+        if (!$response->successful()) {
             throw new \RuntimeException("Cannot download clip: {$url}");
         }
-        return $bytes;
+        return $response->body();
     }
 
     private function cleanup(string $dir): void
