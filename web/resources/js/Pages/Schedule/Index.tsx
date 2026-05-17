@@ -48,13 +48,21 @@ const PLATFORMS = [
     { id: 'facebook', label: 'Facebook', icon: Share2, color: 'bg-blue-600 text-white' },
 ];
 
+type ScheduleForm = {
+    platforms: string[];
+    caption: string;
+    media_url: string;
+    scheduled_at: string;
+};
+
 export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, socialAccounts }: Props) {
     const [currentDate, setCurrentDate] = useState(new Date());
+    void socialAccounts;
     const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm<ScheduleForm>({
         platforms: [] as string[],
         caption: '',
         media_url: '',
@@ -256,7 +264,7 @@ export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, soci
                     </div>
 
                     <div className="grid grid-cols-7 grid-rows-5 h-[600px] sm:h-[700px]">
-                        {calendarDays.map((day, i) => {
+                        {calendarDays.map((day: Date) => {
                             const dayPosts = getPostsForDay(day);
                             const isToday = isSameDay(day, new Date());
                             const isCurrentMonth = isSameMonth(day, monthStart);
