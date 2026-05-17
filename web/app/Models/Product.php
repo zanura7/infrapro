@@ -25,6 +25,7 @@ class Product extends Model
         'target_audience',
         'pain_point',
         'brand_voice',
+        'strategy',
         'current_version',
         'archived_at',
     ];
@@ -32,6 +33,7 @@ class Product extends Model
     protected $casts = [
         'usp' => 'array',
         'brand_voice' => 'array',
+        'strategy' => 'array',
         'price' => 'decimal:2',
         'current_version' => 'integer',
         'archived_at' => 'datetime',

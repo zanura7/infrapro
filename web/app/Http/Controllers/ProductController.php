@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
+use App\Jobs\GenerateProductStrategyJob;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,6 +116,26 @@ class ProductController extends Controller
         return redirect()
             ->route('products.index')
             ->with('flash.success', "Archived '{$product->name}'.");
+    }
+
+    public function generateStrategy(Product $product): JsonResponse
+    {
+        $this->authorizeOwner($product);
+
+        try {
+            GenerateProductStrategyJob::dispatchSync($product);
+            $product->refresh();
+
+            return response()->json([
+                'success' => true,
+                'strategy' => $product->strategy,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     private function authorizeOwner(Product $product): void

@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, ChevronDown, ChevronUp, History, Image as ImageIcon, RotateCcw, Sparkles, Upload, Video, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ArrowLeft, ChevronDown, ChevronUp, Hash, History, Image as ImageIcon, Lightbulb, Loader2, MessageCircle, RefreshCw, RotateCcw, Sparkles, Target, Upload, Users, Video, X } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 
 type Asset = {
     id: number;
@@ -44,6 +44,7 @@ type Product = {
     target_audience: string | null;
     pain_point: string | null;
     brand_voice: any;
+    strategy: any;
     current_version: number;
     assets: Asset[];
     versions: Version[];
@@ -53,7 +54,7 @@ type Product = {
 type Props = { product: Product };
 
 export default function ProductShow({ product }: Props) {
-    const [tab, setTab] = useState<'master' | 'assets' | 'voice' | 'versions' | 'content'>('master');
+    const [tab, setTab] = useState<'master' | 'assets' | 'voice' | 'strategy' | 'versions' | 'content'>('master');
     const fileRef = useRef<HTMLInputElement>(null);
     const upload = useForm<{ files: File[]; tag: string }>({ files: [], tag: '' });
 
@@ -103,11 +104,12 @@ export default function ProductShow({ product }: Props) {
                 </div>
 
                 <div className="relative flex gap-1 mt-8 -mb-6 text-sm">
-                    {(['master', 'assets', 'voice', 'versions', 'content'] as const).map((t) => {
+                    {(['master', 'assets', 'voice', 'strategy', 'versions', 'content'] as const).map((t) => {
                         const labels: Record<typeof t, string> = {
                             master: 'Master Info',
                             assets: 'Asset Library',
                             voice: 'Brand Voice',
+                            strategy: 'AI Strategy',
                             versions: 'Versions',
                             content: 'Linked Content',
                         };
@@ -115,6 +117,7 @@ export default function ProductShow({ product }: Props) {
                             master: undefined,
                             assets: product.assets.length,
                             voice: undefined,
+                            strategy: undefined,
                             versions: product.versions.length,
                             content: product.content_jobs.length,
                         };
@@ -151,6 +154,7 @@ export default function ProductShow({ product }: Props) {
                     />
                 )}
                 {tab === 'voice' && <VoicePane product={product} />}
+                {tab === 'strategy' && <StrategyPane product={product} />}
                 {tab === 'versions' && <VersionsPane versions={product.versions} productSlug={product.slug} />}
                 {tab === 'content' && <ContentPane jobs={product.content_jobs} />}
 
@@ -589,6 +593,140 @@ function ContentPane({ jobs }: { jobs: Job[] }) {
                     </div>
                 </div>
             ))}
+        </div>
+    );
+}
+
+function StrategyPane({ product }: { product: Product }) {
+    const [generating, setGenerating] = useState(false);
+    const [strategy, setStrategy] = useState<any>(product.strategy);
+
+    const handleGenerate = async () => {
+        setGenerating(true);
+        try {
+            const res = await fetch(route('products.strategy.generate', product.slug), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            const data = await res.json();
+            if (data.success) {
+                setStrategy(data.strategy);
+                router.reload({ only: ['product'] });
+            } else {
+                alert('Failed to generate strategy: ' + data.error);
+            }
+        } catch (e) {
+            alert('Failed to generate strategy.');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    if (!strategy && !generating) {
+        return (
+            <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center">
+                <Sparkles className="w-10 h-10 text-brand-300 mx-auto mb-4" />
+                <h3 className="font-display text-lg font-medium text-ink-900 mb-2">No AI Strategy Yet</h3>
+                <p className="text-ink-500 text-sm mb-6 max-w-sm mx-auto">
+                    Generate a content strategy including value prop, personas, and hashtags based on your product details.
+                </p>
+                <button
+                    onClick={handleGenerate}
+                    className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                >
+                    <Sparkles className="w-4 h-4" /> Generate Strategy
+                </button>
+            </div>
+        );
+    }
+
+    if (generating) {
+        return (
+            <div className="bg-white border border-ink-200 rounded-2xl p-16 text-center">
+                <Loader2 className="w-10 h-10 text-brand-500 animate-spin mx-auto mb-4" />
+                <h3 className="font-display text-lg font-medium text-ink-900 mb-1">Generating Strategy...</h3>
+                <p className="text-ink-500 text-sm">Our AI is analyzing your product and building a custom content plan.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-4xl space-y-6">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-xl font-semibold">AI Content Strategy</h3>
+                <button
+                    onClick={handleGenerate}
+                    className="px-3 py-2 text-xs font-medium rounded-md bg-white border border-ink-200 hover:bg-ink-50 text-ink-700 inline-flex items-center gap-2"
+                >
+                    <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+                </button>
+            </div>
+
+            <div className="grid grid-cols-12 gap-6">
+                {/* Value Prop & Tone */}
+                <div className="col-span-12 md:col-span-8 space-y-6">
+                    <div className="bg-white rounded-2xl border border-ink-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 text-[10px] tracking-widest text-brand-600 mb-3">
+                            <Target className="w-4 h-4" /> CORE VALUE PROPOSITION
+                        </div>
+                        <p className="text-lg font-medium text-ink-900 leading-snug">{strategy.value_proposition}</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-ink-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 text-[10px] tracking-widest text-brand-600 mb-4">
+                            <Lightbulb className="w-4 h-4" /> KEY SELLING POINTS
+                        </div>
+                        <ul className="space-y-3">
+                            {strategy.selling_points?.map((pt: string, idx: number) => (
+                                <li key={idx} className="flex gap-3 text-sm text-ink-800">
+                                    <span className="shrink-0 w-5 h-5 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-medium mt-0.5">{idx + 1}</span>
+                                    <span>{pt}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="col-span-12 md:col-span-4 space-y-6">
+                    <div className="bg-white rounded-2xl border border-ink-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 text-[10px] tracking-widest text-brand-600 mb-3">
+                            <MessageCircle className="w-4 h-4" /> TONE OF VOICE
+                        </div>
+                        <p className="text-sm text-ink-800 capitalize">{strategy.tone_of_voice}</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-ink-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 text-[10px] tracking-widest text-brand-600 mb-3">
+                            <Hash className="w-4 h-4" /> HASHTAGS
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {strategy.hashtags?.map((tag: string) => (
+                                <span key={tag} className="px-2 py-1 text-xs rounded-md bg-ink-50 text-ink-600 border border-ink-100">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Personas */}
+                <div className="col-span-12 bg-white rounded-2xl border border-ink-200 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 text-[10px] tracking-widest text-brand-600 mb-4">
+                        <Users className="w-4 h-4" /> TARGET PERSONAS
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {strategy.personas?.map((p: any, idx: number) => (
+                            <div key={idx} className="p-4 rounded-xl bg-ink-50/50 border border-ink-100">
+                                <h4 className="font-medium text-ink-900 mb-2">{p.name}</h4>
+                                <p className="text-sm text-ink-600">{p.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
