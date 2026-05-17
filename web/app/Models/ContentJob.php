@@ -56,6 +56,11 @@ class ContentJob extends Model
         return $this->hasMany(ContentJob::class, 'parent_id');
     }
 
+    public function scheduledPosts(): HasMany
+    {
+        return $this->hasMany(ScheduledPost::class, 'content_id');
+    }
+
     public function markRunning(): void
     {
         $this->update([
