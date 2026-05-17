@@ -64,4 +64,6 @@ return [
         'base_url' => env('NINEROUTER_BASE_URL', 'https://router.viber.id/v1'),
         'model' => env('NINEROUTER_MODEL', 'grok-2-1212'),
     ],
+
+    'ai_provider' => env('AI_PROVIDER', 'viber'),
 ];

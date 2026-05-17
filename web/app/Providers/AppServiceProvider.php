@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         
         // Bind AiProviderInterface based on AI_PROVIDER env
         $this->app->bind(AiProviderInterface::class, function ($app) {
-            $provider = env('AI_PROVIDER', 'viber');
+            $provider = config('services.ai_provider', 'viber');
             
             if ($provider === '9router') {
                 return new \App\Services\Ai\NineRouterAiProvider(config('services.9router'));
