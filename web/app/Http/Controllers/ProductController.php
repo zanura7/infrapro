@@ -121,6 +121,7 @@ class ProductController extends Controller
     public function generateStrategy(Product $product): JsonResponse
     {
         $this->authorizeOwner($product);
+        set_time_limit(180);
 
         try {
             GenerateProductStrategyJob::dispatchSync($product);
