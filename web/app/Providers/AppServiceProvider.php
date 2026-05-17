@@ -8,6 +8,8 @@ use App\Services\Ai\ViberAiVideoProvider;
 use App\Services\Contracts\AiProviderInterface;
 use App\Services\Contracts\ImageProviderInterface;
 use App\Services\Contracts\VideoProviderInterface;
+use App\Services\Publishers\MetaPublisher;
+use App\Services\Publishers\TikTokPublisher;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(ViberAiVideoProvider::class, fn () => ViberAiVideoProvider::fromConfig());
         $this->app->bind(VideoProviderInterface::class, ViberAiVideoProvider::class);
+
+        // Register publishers
+        $this->app->singleton(TikTokPublisher::class);
+        $this->app->singleton(MetaPublisher::class);
     }
 
     public function boot(): void
