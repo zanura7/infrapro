@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiStudioController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IntegrationsController;
 use App\Http\Controllers\PosterController;
 use App\Http\Controllers\ProductAssetController;
 use App\Http\Controllers\ProductController;
@@ -33,6 +34,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Product versions
     Route::put('/products/{product:slug}/versions/{version}/restore', [ProductVersionController::class, 'restore'])->name('product-versions.restore');
 
+    // Strategy
+    Route::post('/products/{product:slug}/strategy', [ProductController::class, 'generateStrategy'])->name('products.strategy.generate');
+
     // AI Content Studio
     Route::get('/studio', [AiStudioController::class, 'index'])->name('studio.index');
     Route::post('/studio/analyze', [AiStudioController::class, 'analyze'])->name('studio.analyze');
@@ -50,6 +54,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Settings
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+
+    // Integrations
+    Route::get('/integrations/{platform}/connect', [IntegrationsController::class, 'connect'])->name('integrations.connect');
+    Route::get('/integrations/{platform}/callback', [IntegrationsController::class, 'callback'])->name('integrations.callback');
+    Route::post('/integrations/{platform}/disconnect', [IntegrationsController::class, 'disconnect'])->name('integrations.disconnect');
 });
 
 Route::middleware('auth')->group(function () {

@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import { Bell, Key, User as UserIcon } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Bell, Camera, Key, Link2, Share2, User as UserIcon, Video } from 'lucide-react';
+import { ComponentType, FormEventHandler } from 'react';
 import { Button } from '@/Components/ui/button';
+import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
@@ -99,6 +100,88 @@ function NotificationsTab() {
     );
 }
 
+type Integration = {
+    id: string;
+    name: string;
+    icon: ComponentType<{ className?: string }>;
+    connected: boolean;
+};
+
+function IntegrationsTab() {
+    const integrations: Integration[] = [
+        { id: 'tiktok', name: 'TikTok', icon: Video, connected: false },
+        { id: 'instagram', name: 'Instagram', icon: Camera, connected: false },
+        { id: 'facebook', name: 'Facebook', icon: Share2, connected: false },
+    ];
+
+    const handleConnect = (id: string) => {
+        // TODO: Redirect to OAuth flow
+        window.location.href = `/integrations/${id}/connect`;
+    };
+
+    const handleDisconnect = (id: string) => {
+        router.post(`/integrations/${id}/disconnect`);
+    };
+
+    return (
+        <Card className="border-border bg-card">
+            <CardHeader>
+                <CardTitle>Social Integrations</CardTitle>
+                <CardDescription>
+                    Connect your social media accounts to publish content directly.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    {integrations.map((integration) => {
+                        const Icon = integration.icon;
+                        return (
+                            <div
+                                key={integration.id}
+                                className="flex items-center justify-between rounded-lg border border-border p-4"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Icon className="h-6 w-6 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">{integration.name}</p>
+                                        <div className="mt-1">
+                                            {integration.connected ? (
+                                                <Badge variant="default" className="bg-green-600">
+                                                    Connected
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="secondary">Not Connected</Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    {integration.connected ? (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDisconnect(integration.id)}
+                                        >
+                                            Disconnect
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleConnect(integration.id)}
+                                        >
+                                            Connect
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function SettingsIndex({ user }: Props) {
     return (
         <AuthenticatedLayout header="Settings" activeKey="settings">
@@ -119,6 +202,10 @@ export default function SettingsIndex({ user }: Props) {
                             <Bell className="h-4 w-4" />
                             Notifications
                         </TabsTrigger>
+                        <TabsTrigger value="integrations" className="gap-2">
+                            <Link2 className="h-4 w-4" />
+                            Integrations
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profile">
@@ -129,6 +216,9 @@ export default function SettingsIndex({ user }: Props) {
                     </TabsContent>
                     <TabsContent value="notifications">
                         <NotificationsTab />
+                    </TabsContent>
+                    <TabsContent value="integrations">
+                        <IntegrationsTab />
                     </TabsContent>
                 </Tabs>
             </div>
