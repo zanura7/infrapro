@@ -604,22 +604,31 @@ function StrategyPane({ product }: { product: Product }) {
     const handleGenerate = async () => {
         setGenerating(true);
         try {
-            const res = await fetch(route('products.strategy.generate', product.slug), {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const res = await fetch(`/products/${product.slug}/strategy`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrf,
                 },
             });
-            const data = await res.json();
-            if (data.success) {
+
+            const contentType = res.headers.get('content-type') || '';
+            const data = contentType.includes('application/json')
+                ? await res.json()
+                : { success: false, error: await res.text() };
+
+            if (res.ok && data.success) {
                 setStrategy(data.strategy);
                 router.reload({ only: ['product'] });
             } else {
-                alert('Failed to generate strategy: ' + data.error);
+                alert('Failed to generate strategy: ' + (data.error || `HTTP ${res.status}`));
             }
         } catch (e) {
-            alert('Failed to generate strategy.');
+            alert('Failed to generate strategy: ' + (e instanceof Error ? e.message : 'Unknown error'));
         } finally {
             setGenerating(false);
         }
