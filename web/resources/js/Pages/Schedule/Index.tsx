@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import {
-    ChevronLeft, ChevronRight, Clock, Facebook, Instagram,
+    ChevronLeft, ChevronRight, Clock, Share2, Camera,
     Plus, Smartphone, Video as VideoIcon, Trash2, Calendar as CalendarIcon,
     AlertCircle, CheckCircle2
 } from 'lucide-react';
@@ -15,12 +15,11 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import {
-    Sheet, SheetContent, SheetDescription,
-    SheetHeader, SheetTitle, SheetTrigger, SheetFooter
+    Sheet, SheetContent,
+    SheetHeader, SheetTitle, SheetTrigger
 } from '@/Components/ui/sheet';
 import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
-import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -45,8 +44,8 @@ interface Props {
 
 const PLATFORMS = [
     { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'bg-black text-white' },
-    { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white' },
-    { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'bg-blue-600 text-white' },
+    { id: 'instagram', label: 'Instagram', icon: Camera, color: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white' },
+    { id: 'facebook', label: 'Facebook', icon: Share2, color: 'bg-blue-600 text-white' },
 ];
 
 export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, socialAccounts }: Props) {
@@ -156,9 +155,9 @@ export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, soci
                         <SheetContent className="sm:max-w-xl overflow-y-auto">
                             <SheetHeader>
                                 <SheetTitle>Schedule New Post</SheetTitle>
-                                <SheetDescription>
+                                <div className="text-sm text-ink-500">
                                     Select platforms and set a time for your content to go live.
-                                </SheetDescription>
+                                </div>
                             </SheetHeader>
 
                             <form onSubmit={handleCreateSubmit} className="space-y-6 py-6">
@@ -237,11 +236,11 @@ export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, soci
                                     </div>
                                 </div>
 
-                                <SheetFooter>
+                                <div className="flex gap-3 pt-4">
                                     <Button type="submit" className="w-full" disabled={processing}>
                                         Schedule Content
                                     </Button>
-                                </SheetFooter>
+                                </div>
                             </form>
                         </SheetContent>
                     </Sheet>
@@ -310,7 +309,7 @@ export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, soci
                 <SheetContent side="right">
                     {selectedPost && (
                         <div className="space-y-6">
-                            <SheetHeader>
+                                <SheetHeader>
                                 <div className="flex items-center gap-2 mb-2">
                                     {(() => {
                                         const p = PLATFORMS.find(x => x.id === selectedPost.platform);
@@ -328,9 +327,9 @@ export default function ScheduleIndex({ connectedPlatforms, scheduledPosts, soci
                                     </Badge>
                                 </div>
                                 <SheetTitle>Post Details</SheetTitle>
-                                <SheetDescription className="flex items-center gap-2">
+                                <div className="text-sm text-ink-500 flex items-center gap-2">
                                     <Clock className="h-3 w-3" /> {format(parseISO(selectedPost.scheduled_at), 'MMMM d, yyyy @ HH:mm')}
-                                </SheetDescription>
+                                </div>
                             </SheetHeader>
 
                             <div className="space-y-4">
