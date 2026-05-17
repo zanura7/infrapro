@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ContentJob;
-use App\Services\Ai\ViberAi;
+use App\Services\Contracts\VideoProviderInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,7 +21,7 @@ class GenerateSceneVideoJob implements ShouldQueue
 
     public function __construct(public readonly int $contentJobId) {}
 
-    public function handle(ViberAi $ai): void
+    public function handle(VideoProviderInterface $videoProvider): void
     {
         $job = ContentJob::find($this->contentJobId);
         if (! $job) return;
@@ -30,23 +30,99 @@ class GenerateSceneVideoJob implements ShouldQueue
         $input = (array) $job->input;
 
         try {
-            [$base64, $mime] = $this->approvedImageToBase64($input['approved_image']);
+            $prompt = $input['prompt'];
+            $options = [
+                'video_config' => [
+                    'aspect_ratio' => $input['aspect_ratio'] ?? '9:16',
+                    'video_length' => (int) ($input['clip_seconds'] ?? 6),
+                ],
+            ];
 
-            $videoUrl = $ai->generateVideo(
-                imageBase64: $base64,
-                mimeType: $mime,
-                prompt: $input['prompt'],
-                aspectRatio: $input['aspect_ratio'] ?? '9:16',
-                videoLength: (int) ($input['clip_seconds'] ?? 6),
-                voiceoverScript: $input['voiceover_script'] ?? null,
-            );
+            // If approved_image exists, include it in the prompt construction
+            if (!empty($input['approved_image'])) {
+                [$base64, $mime] = $this->approvedImageToBase64($input['approved_image']);
+                $options['image_base64'] = $base64;
+                $options['mime_type'] = $mime;
+            }
+
+            if (!empty($input['voiceover_script'])) {
+                $prompt .= "\n\nThe on-screen person speaks this line, lip-synced, with natural prosody: \"{$input['voiceover_script']}\"";
+            }
+
+            $videoUrl = $videoProvider->generateVideo($prompt, $options);
 
             $stored = $this->persistMedia($videoUrl, $job->product_id, "scene-{$input['scene_index']}-video");
             $job->markSucceeded(['url' => $stored['url'], 'path' => $stored['path']]);
+
+            // If this is the last scene, dispatch StitchScenesJob
+            if ($this->isLastScene($job, $input)) {
+                $this->dispatchStitchJob($job);
+            }
         } catch (\Throwable $e) {
             Log::error('studio.async_video_failed', ['error' => $e->getMessage(), 'job' => $job->id]);
             $job->markFailed($e->getMessage());
         }
+    }
+
+    private function isLastScene(ContentJob $job, array $input): bool
+    {
+        $sceneIndex = (int) ($input['scene_index'] ?? 0);
+        $totalScenes = (int) ($input['total_scenes'] ?? 0);
+
+        if ($totalScenes === 0 || $sceneIndex === 0) {
+            return false;
+        }
+
+        // Check if all sibling jobs are succeeded
+        if ($job->parent_id) {
+            $siblings = ContentJob::where('parent_id', $job->parent_id)
+                ->where('kind', 'video')
+                ->get();
+
+            $allSucceeded = $siblings->every(fn ($s) => $s->status === 'succeeded');
+
+            return $allSucceeded && $sceneIndex === $totalScenes;
+        }
+
+        return false;
+    }
+
+    private function dispatchStitchJob(ContentJob $job): void
+    {
+        if (! $job->parent_id) {
+            return;
+        }
+
+        // Gather all sibling video URLs in scene_index order
+        $siblings = ContentJob::where('parent_id', $job->parent_id)
+            ->where('kind', 'video')
+            ->where('status', 'succeeded')
+            ->get()
+            ->sortBy(fn ($s) => (int) ($s->input['scene_index'] ?? 0));
+
+        $clipUrls = $siblings->map(fn ($s) => $s->output['url'] ?? null)
+            ->filter()
+            ->values()
+            ->toArray();
+
+        if (count($clipUrls) < 2) {
+            Log::warning('stitch.not_enough_clips', ['parent_id' => $job->parent_id, 'count' => count($clipUrls)]);
+            return;
+        }
+
+        $stitchJob = ContentJob::create([
+            'product_id' => $job->product_id,
+            'user_id' => $job->user_id,
+            'parent_id' => $job->parent_id,
+            'kind' => 'stitch',
+            'status' => 'queued',
+            'model' => 'ffmpeg',
+            'input' => ['clip_urls' => $clipUrls],
+        ]);
+
+        StitchScenesJob::dispatch($stitchJob->id);
+
+        Log::info('stitch.dispatched', ['stitch_job_id' => $stitchJob->id, 'clips' => count($clipUrls)]);
     }
 
     private function approvedImageToBase64(string $src): array
