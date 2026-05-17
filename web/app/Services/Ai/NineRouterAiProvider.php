@@ -52,10 +52,18 @@ class NineRouterAiProvider implements AiProviderInterface
                 $chunk = json_decode(substr($line, 6), true);
                 $content .= $chunk['choices'][0]['delta']['content'] ?? '';
             }
-            return $content;
+            return $this->cleanThinkTags($content);
         }
 
-        return $response->json('choices.0.message.content') ?? '';
+        return $this->cleanThinkTags($response->json('choices.0.message.content') ?? '');
+    }
+
+    /**
+     * Strip <think>...</think> reasoning tags from model output.
+     */
+    private function cleanThinkTags(string $text): string
+    {
+        return trim(preg_replace('/<think>[\s\S]*?<\/think>/', '', $text));
     }
 
     public function generateText(string $prompt, ?string $system = null, float $temperature = 0.7): string
