@@ -23,12 +23,13 @@ class NineRouterAiProvider implements AiProviderInterface
     {
         $messages = $options['messages'] ?? [['role' => 'user', 'content' => $prompt]];
 
-        $response = Http::timeout($options['timeout'] ?? 60)
+        $response = Http::timeout($options['timeout'] ?? 120)
             ->withToken($this->apiKey)
             ->post("{$this->baseUrl}/chat/completions", [
                 'model' => $options['model'] ?? $this->model,
                 'messages' => $messages,
                 'temperature' => $options['temperature'] ?? 0.7,
+                'stream' => false,
             ]);
 
         if (!$response->successful()) {
@@ -36,7 +37,22 @@ class NineRouterAiProvider implements AiProviderInterface
                 'status' => $response->status(),
                 'error' => $response->body(),
             ]);
-            throw new \RuntimeException("9Router API error: " . ($response->json('error.message') ?? 'Unknown error'));
+            throw new \RuntimeException("9Router API error: " . ($response->json('error.message') ?? $response->body()));
+        }
+
+        // Handle both streaming (SSE) and non-streaming responses
+        $body = $response->body();
+        
+        if (str_starts_with($body, 'data: ')) {
+            // SSE response — concatenate all content deltas
+            $content = '';
+            foreach (explode("\n", $body) as $line) {
+                $line = trim($line);
+                if (!str_starts_with($line, 'data: ') || $line === 'data: [DONE]') continue;
+                $chunk = json_decode(substr($line, 6), true);
+                $content .= $chunk['choices'][0]['delta']['content'] ?? '';
+            }
+            return $content;
         }
 
         return $response->json('choices.0.message.content') ?? '';
