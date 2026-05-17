@@ -19,7 +19,18 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ViberAi::class, fn () => ViberAi::fromConfig());
-        $this->app->bind(AiProviderInterface::class, ViberAi::class);
+        
+        // Bind AiProviderInterface based on AI_PROVIDER env
+        $this->app->bind(AiProviderInterface::class, function ($app) {
+            $provider = env('AI_PROVIDER', 'viber');
+            
+            if ($provider === '9router') {
+                return new \App\Services\Ai\NineRouterAiProvider(config('services.9router'));
+            }
+            
+            return $app->make(ViberAi::class);
+        });
+        
         $this->app->bind(ImageProviderInterface::class, ViberAi::class);
 
         $this->app->singleton(ViberAiVideoProvider::class, fn () => ViberAiVideoProvider::fromConfig());

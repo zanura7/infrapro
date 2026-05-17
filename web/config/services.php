@@ -59,4 +59,9 @@ return [
         'redirect' => env('TIKTOK_REDIRECT_URI', '/integrations/tiktok/callback'),
     ],
 
+    '9router' => [
+        'api_key' => env('NINEROUTER_API_KEY'),
+        'base_url' => env('NINEROUTER_BASE_URL', 'https://router.viber.id/v1'),
+        'model' => env('NINEROUTER_MODEL', 'grok-2-1212'),
+    ],
 ];
