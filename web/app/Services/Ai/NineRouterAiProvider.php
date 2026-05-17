@@ -63,21 +63,23 @@ class NineRouterAiProvider implements AiProviderInterface
      */
     private function cleanThinkTags(string $text): string
     {
-        // 1. Remove <think> tags
-        $text = trim(preg_replace('/<think>[\s\S]*?<\/think>/', '', $text));
+        // 1. Remove ALL <think> tags (nested or multiple)
+        while (preg_match('/<think>[\s\S]*?<\/think>/', $text)) {
+            $text = preg_replace('/<think>[\s\S]*?<\/think>/', '', $text);
+        }
+        $text = trim($text);
         
         // 2. Strip markdown fences if AI wraps JSON
         if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $text, $m)) {
             $text = trim($m[1]);
         }
         
-        // 3. Fix unescaped newlines inside strings (common Claude streaming artifact)
-        // Find everything between quotes and escape newlines
+        // 3. Fix unescaped newlines inside JSON string values
         $text = preg_replace_callback('/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/s', function($matches) {
-            return '"' . str_replace(["\n", "\r"], ['\n', '\r'], $matches[1]) . '"';
+            return '"' . str_replace(["\n", "\r"], ['\\n', '\\r'], $matches[1]) . '"';
         }, $text);
 
-        return $text;
+        return trim($text);
     }
 
     public function generateText(string $prompt, ?string $system = null, float $temperature = 0.7): string
