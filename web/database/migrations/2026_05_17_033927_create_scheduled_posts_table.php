@@ -8,19 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('scheduled_posts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('content_id')->nullable()->constrained('content_jobs')->nullOnDelete();
-            $table->enum('platform', ['tiktok', 'instagram', 'facebook']);
-            $table->timestamp('scheduled_at');
-            $table->enum('status', ['pending', 'publishing', 'published', 'failed'])->default('pending');
-            $table->json('response_metadata')->nullable();
-            $table->timestamps();
-        });
+        // Duplicate of 2026_05_17_003222_create_scheduled_posts_table — skipped
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('scheduled_posts');
+        //
     }
 };

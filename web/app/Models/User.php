@@ -43,6 +43,11 @@ class User extends Authenticatable
         return $this->hasMany(SocialAccount::class);
     }
 
+    public function scheduledPosts(): HasMany
+    {
+        return $this->hasMany(ScheduledPost::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

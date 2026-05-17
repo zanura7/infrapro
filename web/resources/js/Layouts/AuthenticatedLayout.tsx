@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Bell, Image as ImageIcon, LayoutDashboard, LogOut, Megaphone, Menu, Package, Plug, Search,
+    Bell, CalendarDays, Image as ImageIcon, LayoutDashboard, LogOut, Megaphone, Menu, Package, Plug, Search,
     Send, Settings2, Sparkles, Users,
 } from 'lucide-react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
@@ -14,7 +14,7 @@ import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { cn } from '@/lib/utils';
 
-type NavKey = 'dashboard' | 'products' | 'studio' | 'poster' | 'posting' | 'ads' | 'team' | 'integrations' | 'settings';
+type NavKey = 'dashboard' | 'products' | 'studio' | 'poster' | 'schedule' | 'posting' | 'ads' | 'team' | 'integrations' | 'settings';
 type Props = PropsWithChildren<{ header?: ReactNode; activeKey?: NavKey }>;
 
 const NAV_PRIMARY: { key: NavKey; href: string; label: string; icon: any; badge?: string; disabled?: boolean }[] = [
@@ -22,6 +22,7 @@ const NAV_PRIMARY: { key: NavKey; href: string; label: string; icon: any; badge?
     { key: 'products',  href: route('products.index'), label: 'Product Hub',       icon: Package },
     { key: 'studio',    href: route('studio.index'),   label: 'AI Studio · Video', icon: Sparkles },
     { key: 'poster',    href: route('poster.index'),   label: 'Image Poster',      icon: ImageIcon },
+    { key: 'schedule',  href: route('schedule.index'), label: 'Calendar',          icon: CalendarDays },
     { key: 'posting',   href: '#',                     label: 'Auto Posting',      icon: Send,      badge: 'P2', disabled: true },
     { key: 'ads',       href: '#',                     label: 'Ads Integration',   icon: Megaphone, badge: 'P3', disabled: true },
 ];

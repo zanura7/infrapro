@@ -11,17 +11,33 @@ class ScheduledPost extends Model
     use HasFactory;
 
     protected $fillable = [
-        'content_id',
-        'platform',
-        'scheduled_at',
+        'user_id',
+        'social_account_id',
         'status',
+        'content',
+        'media_urls',
+        'scheduled_at',
+        'published_at',
         'response_metadata',
+        'error_message',
     ];
 
     protected $casts = [
+        'media_urls' => 'array',
         'scheduled_at' => 'datetime',
+        'published_at' => 'datetime',
         'response_metadata' => 'array',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function socialAccount(): BelongsTo
+    {
+        return $this->belongsTo(SocialAccount::class);
+    }
 
     public function contentJob(): BelongsTo
     {

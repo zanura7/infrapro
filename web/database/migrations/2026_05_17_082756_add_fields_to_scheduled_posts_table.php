@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Duplicate of 2026_05_17_003222_create_social_accounts_table — skipped
+        // Redundant — scheduled_posts already has all needed fields
     }
 
     public function down(): void

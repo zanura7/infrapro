@@ -8,6 +8,7 @@ use App\Http\Controllers\ProductAssetController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVersionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/poster/jobs/{id}', [PosterController::class, 'jobStatus'])->name('poster.job');
     Route::get('/poster/jobs/{id}/batch', [PosterController::class, 'batchStatus'])->name('poster.batch');
     Route::get('/poster/download/{id}', [PosterController::class, 'download'])->name('poster.download');
+
+    // Scheduling
+    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+    Route::post('/schedule', [ScheduleController::class, 'store'])->name('schedule.store');
+    Route::put('/schedule/{post}', [ScheduleController::class, 'update'])->name('schedule.update');
+    Route::delete('/schedule/{post}', [ScheduleController::class, 'destroy'])->name('schedule.destroy');
 
     // Settings
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
