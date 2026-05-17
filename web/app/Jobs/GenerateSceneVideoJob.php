@@ -38,7 +38,6 @@ class GenerateSceneVideoJob implements ShouldQueue
                 ],
             ];
 
-            // If approved_image exists, include it in the prompt construction
             if (!empty($input['approved_image'])) {
                 [$base64, $mime] = $this->approvedImageToBase64($input['approved_image']);
                 $options['image_base64'] = $base64;
@@ -49,12 +48,17 @@ class GenerateSceneVideoJob implements ShouldQueue
                 $prompt .= "\n\nThe on-screen person speaks this line, lip-synced, with natural prosody: \"{$input['voiceover_script']}\"";
             }
 
+            [$refVideoBase64, $refVideoMime] = $this->resolveRefVideo($input);
+            if ($refVideoBase64) {
+                $options['ref_video_base64'] = $refVideoBase64;
+                $options['ref_video_mime'] = $refVideoMime;
+            }
+
             $videoUrl = $videoProvider->generateVideo($prompt, $options);
 
             $stored = $this->persistMedia($videoUrl, $job->product_id, "scene-{$input['scene_index']}-video");
             $job->markSucceeded(['url' => $stored['url'], 'path' => $stored['path']]);
 
-            // If this is the last scene, dispatch StitchScenesJob
             if ($this->isLastScene($job, $input)) {
                 $this->dispatchStitchJob($job);
             }
@@ -73,7 +77,6 @@ class GenerateSceneVideoJob implements ShouldQueue
             return false;
         }
 
-        // Check if all sibling jobs are succeeded
         if ($job->parent_id) {
             $siblings = ContentJob::where('parent_id', $job->parent_id)
                 ->where('kind', 'video')
@@ -93,7 +96,6 @@ class GenerateSceneVideoJob implements ShouldQueue
             return;
         }
 
-        // Gather all sibling video URLs in scene_index order
         $siblings = ContentJob::where('parent_id', $job->parent_id)
             ->where('kind', 'video')
             ->where('status', 'succeeded')
@@ -123,6 +125,14 @@ class GenerateSceneVideoJob implements ShouldQueue
         StitchScenesJob::dispatch($stitchJob->id);
 
         Log::info('stitch.dispatched', ['stitch_job_id' => $stitchJob->id, 'clips' => count($clipUrls)]);
+    }
+
+    private function resolveRefVideo(array $input): array
+    {
+        if (empty($input['ref_video_path'])) return [null, null];
+        $bytes = Storage::disk($input['ref_video_disk'] ?? 'local')->get($input['ref_video_path']);
+        if (! $bytes) return [null, null];
+        return [base64_encode($bytes), $input['ref_video_mime'] ?? 'video/mp4'];
     }
 
     private function approvedImageToBase64(string $src): array

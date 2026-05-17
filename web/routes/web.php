@@ -44,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/studio/generate-image', [AiStudioController::class, 'generateImage'])->name('studio.image');
     Route::post('/studio/generate-video', [AiStudioController::class, 'generateVideo'])->name('studio.video');
     Route::post('/studio/stitch', [AiStudioController::class, 'stitch'])->name('studio.stitch');
+    Route::post('/studio/generate-auto', [AiStudioController::class, 'generateAuto'])->name('studio.auto');
+    Route::post('/studio/generate-quick', [AiStudioController::class, 'generateQuick'])->name('studio.quick');
     Route::get('/studio/jobs/{id}', [AiStudioController::class, 'jobStatus'])->name('studio.job');
 
     // Image Poster — single-image promotional banner generator

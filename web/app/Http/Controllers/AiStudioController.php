@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateAutoVideoJob;
+use App\Jobs\GenerateQuickVideoJob;
 use App\Jobs\GenerateSceneImageJob;
 use App\Jobs\GenerateSceneVideoJob;
 use App\Jobs\StitchScenesJob;
@@ -172,11 +174,14 @@ class AiStudioController extends Controller
             'voiceover_script' => ['nullable', 'string', 'max:600'],
             'aspect_ratio'     => ['nullable', 'string', 'in:9:16,1:1,4:5,16:9'],
             'clip_seconds'     => ['nullable', 'integer', 'min:4', 'max:10'],
+            'video_ref'        => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:51200'],
         ]);
 
         $product = Product::query()
             ->where('user_id', $request->user()->id)
             ->findOrFail($request->integer('product_id'));
+
+        [$refVideoDisk, $refVideoPath, $refVideoMime] = $this->resolveVideoRefInput($request, $product);
 
         $job = ContentJob::create([
             'product_id' => $product->id,
@@ -191,6 +196,9 @@ class AiStudioController extends Controller
                 'voiceover_script' => $request->string('voiceover_script')->toString(),
                 'aspect_ratio'     => $request->string('aspect_ratio')->toString() ?: '9:16',
                 'clip_seconds'     => $request->integer('clip_seconds') ?: 6,
+                'ref_video_disk'   => $refVideoDisk,
+                'ref_video_path'   => $refVideoPath,
+                'ref_video_mime'   => $refVideoMime,
             ],
         ]);
 
@@ -228,6 +236,114 @@ class AiStudioController extends Controller
         ]);
 
         StitchScenesJob::dispatch($job->id);
+
+        return response()->json(['job_id' => $job->id, 'status' => 'queued'], 202);
+    }
+
+    /**
+     * Option B — dispatch the full backend pipeline as a single job.
+     * strategy → 5×image → 5×video → FFmpeg stitch → 1 final video.
+     */
+    public function generateAuto(Request $request): JsonResponse
+    {
+        $request->validate([
+            'product_id'    => ['required', 'integer', 'exists:products,id'],
+            'template_slug' => ['required', 'string', 'exists:studio_templates,slug'],
+            'language'      => ['nullable', 'string', 'in:indonesian,malay,english'],
+            'scene_count'   => ['nullable', 'integer', 'min:3', 'max:8'],
+            'clip_seconds'  => ['nullable', 'integer', 'min:4', 'max:10'],
+            'aspect_ratio'  => ['nullable', 'string', 'in:9:16,1:1,4:5,16:9'],
+            'asset_id'      => ['nullable', 'integer', 'exists:product_assets,id'],
+            'image'         => ['nullable', 'file', 'image', 'max:10240'],
+            'video_ref'     => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:51200'],
+        ]);
+
+        $product  = Product::query()->where('user_id', $request->user()->id)->findOrFail($request->integer('product_id'));
+        $template = StudioTemplate::where('slug', $request->string('template_slug')->toString())->first();
+
+        $sceneCount  = (int) ($request->input('scene_count') ?: ($template->default_scene_count ?? 5));
+        $clipSeconds = (int) ($request->input('clip_seconds') ?: ($template->default_clip_seconds ?? 6));
+        $aspectRatio = $request->input('aspect_ratio') ?: ($template?->default_aspect_ratio ?? '9:16');
+
+        [$disk, $path, $mime]                         = $this->resolveOptionalImageInput($request, $product);
+        [$refVideoDisk, $refVideoPath, $refVideoMime] = $this->resolveVideoRefInput($request, $product);
+
+        $job = ContentJob::create([
+            'product_id' => $product->id,
+            'user_id'    => $request->user()->id,
+            'kind'       => 'full_video',
+            'status'     => 'queued',
+            'model'      => config('services.viber.models.video'),
+            'input'      => [
+                'language'       => $request->input('language', 'indonesian'),
+                'template_slug'  => $template?->slug,
+                'scene_count'    => $sceneCount,
+                'clip_seconds'   => $clipSeconds,
+                'aspect_ratio'   => $aspectRatio,
+                'image_disk'     => $disk,
+                'image_path'     => $path,
+                'image_mime'     => $mime,
+                'ref_video_disk' => $refVideoDisk,
+                'ref_video_path' => $refVideoPath,
+                'ref_video_mime' => $refVideoMime,
+            ],
+        ]);
+
+        GenerateAutoVideoJob::dispatch($job->id);
+
+        return response()->json(['job_id' => $job->id, 'status' => 'queued'], 202);
+    }
+
+    /**
+     * Option A — dispatch a single 30-second video API call.
+     * strategy (text-only) → combined prompt → one generateVideo(videoLength=30).
+     */
+    public function generateQuick(Request $request): JsonResponse
+    {
+        $request->validate([
+            'product_id'    => ['required', 'integer', 'exists:products,id'],
+            'template_slug' => ['required', 'string', 'exists:studio_templates,slug'],
+            'language'      => ['nullable', 'string', 'in:indonesian,malay,english'],
+            'scene_count'   => ['nullable', 'integer', 'min:3', 'max:8'],
+            'clip_seconds'  => ['nullable', 'integer', 'min:4', 'max:10'],
+            'aspect_ratio'  => ['nullable', 'string', 'in:9:16,1:1,4:5,16:9'],
+            'asset_id'      => ['nullable', 'integer', 'exists:product_assets,id'],
+            'image'         => ['nullable', 'file', 'image', 'max:10240'],
+            'video_ref'     => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:51200'],
+        ]);
+
+        $product  = Product::query()->where('user_id', $request->user()->id)->findOrFail($request->integer('product_id'));
+        $template = StudioTemplate::where('slug', $request->string('template_slug')->toString())->first();
+
+        $sceneCount  = (int) ($request->input('scene_count') ?: ($template->default_scene_count ?? 5));
+        $clipSeconds = (int) ($request->input('clip_seconds') ?: ($template->default_clip_seconds ?? 6));
+        $aspectRatio = $request->input('aspect_ratio') ?: ($template?->default_aspect_ratio ?? '9:16');
+
+        [$disk, $path, $mime]                         = $this->resolveOptionalImageInput($request, $product);
+        [$refVideoDisk, $refVideoPath, $refVideoMime] = $this->resolveVideoRefInput($request, $product);
+
+        $job = ContentJob::create([
+            'product_id' => $product->id,
+            'user_id'    => $request->user()->id,
+            'kind'       => 'quick_video',
+            'status'     => 'queued',
+            'model'      => config('services.viber.models.video'),
+            'input'      => [
+                'language'       => $request->input('language', 'indonesian'),
+                'template_slug'  => $template?->slug,
+                'scene_count'    => $sceneCount,
+                'clip_seconds'   => $clipSeconds,
+                'aspect_ratio'   => $aspectRatio,
+                'image_disk'     => $disk,
+                'image_path'     => $path,
+                'image_mime'     => $mime,
+                'ref_video_disk' => $refVideoDisk,
+                'ref_video_path' => $refVideoPath,
+                'ref_video_mime' => $refVideoMime,
+            ],
+        ]);
+
+        GenerateQuickVideoJob::dispatch($job->id);
 
         return response()->json(['job_id' => $job->id, 'status' => 'queued'], 202);
     }
@@ -281,6 +397,33 @@ class AiStudioController extends Controller
             abort(422, 'No product image available. Upload one first.');
         }
         return [$asset->disk, $asset->path, $asset->mime];
+    }
+
+    private function resolveOptionalImageInput(Request $request, Product $product): array
+    {
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $path = $file->store("temp/inputs/{$product->id}", 'local');
+            return ['local', $path, $file->getMimeType()];
+        }
+        if ($id = $request->input('asset_id')) {
+            $asset = ProductAsset::query()
+                ->where('product_id', $product->id)
+                ->findOrFail($id);
+            return [$asset->disk, $asset->path, $asset->mime];
+        }
+        $asset = $product->assets()->where('type', 'image')->latest()->first();
+        return $asset ? [$asset->disk, $asset->path, $asset->mime] : [null, null, null];
+    }
+
+    private function resolveVideoRefInput(Request $request, Product $product): array
+    {
+        if ($request->hasFile('video_ref')) {
+            $file = $request->file('video_ref');
+            $path = $file->store("temp/inputs/{$product->id}", 'local');
+            return ['local', $path, $file->getMimeType()];
+        }
+        return [null, null, null];
     }
 
     private function productContext(Product $product): string

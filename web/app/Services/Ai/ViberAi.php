@@ -335,17 +335,30 @@ class ViberAi implements AiProviderInterface, ImageProviderInterface
         string $resolution = '480p',
         string $preset = 'normal',
         ?string $voiceoverScript = null,
+        ?string $refVideoBase64 = null,
+        ?string $refVideoMime = null,
     ): string {
         $effectivePrompt = $prompt;
         if ($voiceoverScript) {
             $effectivePrompt .= "\n\nThe on-screen person speaks this line, lip-synced, with natural prosody: \"{$voiceoverScript}\"";
         }
+        if ($refVideoBase64) {
+            $effectivePrompt .= "\n\nSTYLE REFERENCE: Match the visual style, pacing, editing rhythm, and cinematography of the provided reference video. Adapt the narrative to fit the product, but keep the same visual language.";
+        }
 
-        if ($imageBase64 && $mimeType) {
-            $content = [
-                ['type' => 'text', 'text' => $effectivePrompt],
-                ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageBase64}"]],
-            ];
+        // Build content: plain string when text-only (backward compat with proxy),
+        // array of blocks when at least one media attachment is present.
+        $hasImage = $imageBase64 && $mimeType;
+        $hasRefVideo = $refVideoBase64 && $refVideoMime;
+
+        if ($hasImage || $hasRefVideo) {
+            $content = [['type' => 'text', 'text' => $effectivePrompt]];
+            if ($hasImage) {
+                $content[] = ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageBase64}"]];
+            }
+            if ($hasRefVideo) {
+                $content[] = ['type' => 'video_url', 'video_url' => ['url' => "data:{$refVideoMime};base64,{$refVideoBase64}"]];
+            }
         } else {
             $content = $effectivePrompt;
         }

@@ -91,4 +91,9 @@ class ContentJob extends Model
             'finished_at' => now(),
         ]);
     }
+
+    public function updateProgress(array $progress): void
+    {
+        $this->update(['output' => $progress]);
+    }
 }
