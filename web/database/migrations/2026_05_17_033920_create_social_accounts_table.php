@@ -8,11 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Duplicate of 2026_05_17_003222_create_social_accounts_table — skipped
+        Schema::create('social_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->enum('platform', ['tiktok', 'meta']);
+            $table->string('platform_user_id');
+            $table->text('token');
+            $table->text('refresh_token')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
-        //
+        Schema::dropIfExists('social_accounts');
     }
 };
