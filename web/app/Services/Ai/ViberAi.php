@@ -157,10 +157,11 @@ class ViberAi implements AiProviderInterface, ImageProviderInterface
         $bodyWithJsonMode = $body + ['response_format' => ['type' => 'json_object']];
 
         $data = $this->tryStrategy($bodyWithJsonMode)
-            ?? $this->tryStrategy($body); // fallback: same prompt without response_format
+            ?? $this->tryStrategy($body)
+            ?? $this->tryStrategy($body);
 
         if ($data === null) {
-            throw new RuntimeException('Strategy model returned non-JSON output twice in a row. Try a different image, or toggle "Skip vision analyze" to use the template directly.');
+            throw new RuntimeException('Strategy model returned non-JSON output 3 times in a row. Try a different image, or toggle "Skip vision analyze" to use the template directly.');
         }
 
         return ContentStrategy::fromArray($data);
@@ -223,10 +224,12 @@ class ViberAi implements AiProviderInterface, ImageProviderInterface
         ];
 
         $bodyWithJsonMode = $body + ['response_format' => ['type' => 'json_object']];
-        $data = $this->tryStrategy($bodyWithJsonMode) ?? $this->tryStrategy($body);
+        $data = $this->tryStrategy($bodyWithJsonMode)
+            ?? $this->tryStrategy($body)
+            ?? $this->tryStrategy($body);
 
         if ($data === null) {
-            throw new RuntimeException('Strategy model returned non-JSON output twice. Try regenerating, or pick a different template.');
+            throw new RuntimeException('Strategy model returned non-JSON output 3 times. Try regenerating, or pick a different template.');
         }
 
         return ContentStrategy::fromArray($data);
@@ -266,7 +269,11 @@ class ViberAi implements AiProviderInterface, ImageProviderInterface
         $json = $this->extractJson($raw);
         $data = json_decode($json, true);
         if (! is_array($data)) {
-            Log::warning('strategy.malformed_json', ['raw_head' => mb_substr($raw, 0, 400)]);
+            Log::warning('strategy.malformed_json', [
+                'raw_head' => mb_substr($raw, 0, 1000),
+                'cleaned' => mb_substr($json, 0, 1000),
+            ]);
+            Log::error('strategy.parse_failure_raw', ['raw' => $raw]);
             return null;
         }
         return $data;
@@ -425,14 +432,16 @@ class ViberAi implements AiProviderInterface, ImageProviderInterface
 
     private function extractJson(string $raw): string
     {
-        $cleaned = trim($raw);
+        // 1. Strip think tags
+        $cleaned = preg_replace('/<think>[\s\S]*?<\/think>/', '', $raw);
+        $cleaned = trim($cleaned);
 
-        // Strip ```json ... ``` fences
+        // 2. Strip markdown fences if AI wraps JSON
         if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $cleaned, $m)) {
             $cleaned = trim($m[1]);
         }
 
-        // Trim to outermost { ... }
+        // 3. Trim to outermost { ... }
         $first = strpos($cleaned, '{');
         $last = strrpos($cleaned, '}');
         if ($first !== false && $last !== false && $last > $first) {
@@ -513,7 +522,9 @@ ABSOLUTE OUTPUT RULES:
   call dedicated image and video generation models itself. You must NOT call
   them or pretend to.
 - Return ONLY one valid JSON object. No prose before or after, no markdown
-  code fences, no commentary.
+  code fences (no ```json or ``` wrappers), no commentary, no explanation.
+- DO NOT wrap your response in <think> tags or any other XML tags.
+- DO NOT add any text outside the JSON object itself.
 The JSON shape:
 
 {
