@@ -52,6 +52,7 @@ type GenState = {
 };
 
 const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS = 120000;
 
 function extractErr(e: any, fallback: string): string {
     const d = e?.response?.data;
@@ -64,10 +65,32 @@ function extractErr(e: any, fallback: string): string {
     return e?.message || fallback;
 }
 
-async function waitForJob(jobId: number): Promise<{ status: string; output: any; error: any }> {
+async function waitForJob(jobId: number, isBatch = false): Promise<{ status: string; output: any; error: any }> {
+    const startTime = Date.now();
     while (true) {
-        const { data } = await axios.get(route('poster.job', { id: jobId }));
-        if (data.status === 'succeeded' || data.status === 'failed') return data;
+        if (Date.now() - startTime > POLL_TIMEOUT_MS) {
+            return { status: 'failed', output: null, error: 'Job timed out after 120s' };
+        }
+        try {
+            if (isBatch) {
+                const { data } = await axios.get(route('poster.batch', { id: jobId }));
+                if (data.status === 'succeeded' || data.status === 'partial') {
+                    // Collect all succeeded children URLs
+                    const urls = (data.children || [])
+                        .filter((c: any) => c.status === 'succeeded')
+                        .map((c: any) => c.output?.url);
+                    return { status: data.status, output: { url: urls[0], urls, batch_id: jobId }, error: null };
+                }
+                if (data.children?.every((c: any) => c.status === 'failed')) {
+                    return { status: 'failed', output: null, error: 'All poster sizes failed.' };
+                }
+            } else {
+                const { data } = await axios.get(route('poster.job', { id: jobId }));
+                if (data.status === 'succeeded' || data.status === 'failed') return data;
+            }
+        } catch (e: any) {
+            // Ignore temporary network errors during polling
+        }
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
 }
@@ -127,9 +150,9 @@ export default function PosterIndex({ products, templates }: { products: Product
             }
         }
         if (missing.length) { setError(`Fill in: ${missing.join(', ')}`); return; }
-
         setError(null);
         setGenState({ loading: true, error: undefined, url: undefined });
+        cancelledRef.current = false;
         try {
             const fd = new FormData();
             fd.append('product_id', String(productId));
@@ -141,13 +164,18 @@ export default function PosterIndex({ products, templates }: { products: Product
             if (uploadedFile) fd.append('image', uploadedFile);
 
             const { data } = await axios.post(route('poster.generate'), fd);
-            setGenState({ job_id: data.job_id, loading: true });
-            const result = await waitForJob(data.job_id);
+            
+            const isBatch = !!data.batch_id;
+            const targetId = isBatch ? data.batch_id : data.job_id;
+            
+            setGenState({ job_id: targetId, loading: true });
+            
+            const result = await waitForJob(targetId, isBatch);
             if (cancelledRef.current) return;
-            if (result.status === 'succeeded') {
+            if (result.status === 'succeeded' || result.status === 'partial') {
                 setGenState({ url: result.output?.url, loading: false });
             } else {
-                setGenState({ loading: false, error: result.error?.message || 'Poster generation failed.' });
+                setGenState({ loading: false, error: typeof result.error === 'string' ? result.error : result.error?.message || 'Poster generation failed.' });
             }
         } catch (e: any) {
             setGenState({ loading: false, error: extractErr(e, 'Poster dispatch failed.') });
